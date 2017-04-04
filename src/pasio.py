@@ -9,6 +9,7 @@ def log_marginal_likelyhood(counts, alpha, beta):
     sub2 = (sum_counts+alpha+1)*np.log(num_counts+beta)
     return add1-sub1-sub2
 
+
 def split_on_two_segments_or_not(counts, score_fn):
     best_score = score_fn(counts)
     split_point = None
@@ -20,39 +21,6 @@ def split_on_two_segments_or_not(counts, score_fn):
             best_score = current_score
     return best_score, split_point
 
-#def splits_from_matrix(matrix):
-#    assert matrix.shape[0] == matrix.shape[1]
-#    for i in range(matrix.shape[0]):
-#        pass
-#
-#def get_splits_from_split_points(splits_at_points, start_point):
-#    current_point = start_point
-#    split_points = [len(splits_at_points)]
-#    for i in range(len(splits_at_points))[::-1]:
-#        if splits_at_points[current_point, i]:
-#            current_point-=1
-#            split_points.append(i)
-#    assert current_point == 0
-#    split_points.append(0)
-#    return np.array(split_points[::-1])
-#
-#def split_into_segments_cubic(counts, score_fn):
-#    matrix = np.zeros((len(counts), len(counts)))
-#    splits_at_points = np.zeros((len(counts), len(counts)))
-#    for i in range(0, len(counts)):
-#        matrix[0,i] = score_fn(counts[:(i+1)])
-#        for j in range(1, i+1):
-#            score_if_no_split = counts[j:i+1]
-#            score_if_split = counts[j-1:i+1]
-#            if score_if_split > score_if_no_split:
-#                matrix[j,i] = score_if_split
-#                splits_at_points[i,j] = 1
-#            else:
-#                matrix[j,i] = score_if_no_split
-#                splits_at_points[i,j] = 0
-#    best_number_of_splits = np.argmin(matrix[-1,:])
-#    splits = get_splits_from_split_points(split_at_point, best_number_of_splits)
-#    return best_split_indexes
 
 def split_into_segments_square(counts, score_fn):
     split_scores = np.zeros((len(counts),))
