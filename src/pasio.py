@@ -37,23 +37,30 @@ def split_on_two_segments_or_not(counts, score_fn):
             best_score = current_score
     return best_score, split_point
 
+def collect_split_points(right_borders):
+    split_point = right_borders[-1]
+    split_points_collected = [split_point]
+    while split_point != 0:
+        split_point -= 1
+        split_point = right_borders[split_point]
+        split_points_collected.append(split_point)
+    return split_points_collected[::-1]
 
 def split_into_segments_square(counts, score_fn):
     split_scores = np.zeros((len(counts),))
-    split_points = [[0]]
+    right_borders = np.zeros((len(counts),), dtype=int)
     split_scores[0] = score_fn(counts[0:1])
     for i in range(2, len(counts)+1):
         best_i_score = score_fn(counts[0:i])
-        best_i_split = [0]
+        best_i_split = 0
         for j in range(1, i):
             score_if_split_at_j = score_fn(counts[j:i])+split_scores[j-1]
             if score_if_split_at_j > best_i_score:
                 best_i_score = score_if_split_at_j
-                best_i_split = split_points[j-1]+[j]
+                best_i_split = j
         split_scores[i-1] = best_i_score
-        split_points.append(best_i_split)
-    return split_scores[-1], split_points[-1]
-    #return split_scores, split_points
+        right_borders[i-1] = best_i_split
+    return split_scores[-1], collect_split_points(right_borders)
 
 if __name__ == '__main__':
     score_fn = lambda c:1
