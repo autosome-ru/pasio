@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 
-def test_split_into_segments_square():
+def test_stat_split_into_segments_square():
     np.random.seed(2)
     score_fn = lambda c: pasio.log_marginal_likelyhood(c, 1, 1)
     for repeat in range(10):
@@ -23,3 +23,15 @@ def test_split_into_segments_square():
             assert abs(two_split[1]-100) < 10
 
 
+def test_split_into_segments_square():
+    def score_fn(sequence):
+        if len(set(sequence)) == 1:
+            return 0.5/len(sequence)
+        return 0
+
+    sequence = 'AAABBBC'
+
+    optimal_split = pasio.split_into_segments_square(sequence, score_fn)
+
+    assert optimal_split[0] == 3
+    assert optimal_split[1] == [0,3,6,7]
