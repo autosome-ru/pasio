@@ -26,12 +26,16 @@ def test_stat_split_into_segments_square():
 def test_split_into_segments_square():
     def score_fn(sequence):
         if len(set(sequence)) == 1:
-            return 0.5/len(sequence)
+            return len(sequence)**2
         return 0
 
-    sequence = 'AAABBBC'
-
+    sequence = 'AAA'
     optimal_split = pasio.split_into_segments_square(sequence, score_fn)
+    assert optimal_split[1] == [0]
+    assert optimal_split[0] == 9
 
-    assert optimal_split[0] == 3
-    assert optimal_split[1] == [0,3,6,7]
+    sequence = 'AAABBBC'
+    optimal_split = pasio.split_into_segments_square(sequence, score_fn)
+    assert optimal_split[1] == [0,3,6]
+    assert optimal_split[0] == 9+9+1
+
