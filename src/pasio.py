@@ -1,10 +1,26 @@
 import numpy as np
 
+class LogFactorialComputer:
+    def approximate_log_factorial(self, x):
+        return (x-1./2)*np.log(x)-x+(1./2)*np.log(2*np.pi)+\
+            1./(12*x) - 1./(360*x**3)
+    def __init__(self):
+        self.precomputed = {}
+        for i in range(256):
+            self.precomputed[i] = np.log(np.arange(1, i)).sum()
+    def __call__(self, x):
+        if x < 256:
+            return self.precomputed[x]
+        else:
+            return self.approximate_log_factorial(x)
+
+log_factorial = LogFactorialComputer()
+
 def log_marginal_likelyhood(counts, alpha, beta):
     num_counts = len(counts)
     counts = counts[counts > 0]
     sum_counts = counts.sum()
-    add1 = np.log(np.arange(1, sum_counts+alpha)).sum()
+    add1 = log_factorial(sum_counts+alpha)
     sub1 = np.log(counts).sum()
     sub2 = (sum_counts+alpha+1)*np.log(num_counts+beta)
     return add1-sub1-sub2

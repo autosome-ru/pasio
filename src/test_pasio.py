@@ -39,3 +39,6 @@ def test_split_into_segments_square():
     assert optimal_split[1] == [0,3,6]
     assert optimal_split[0] == 9+9+1
 
+
+def test_approximate_log_factorial():
+    assert np.log(np.arange(1, 256)).sum() == pasio.log_factorial(256)
