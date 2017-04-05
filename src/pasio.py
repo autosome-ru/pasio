@@ -29,14 +29,11 @@ def split_into_segments_square(counts, score_fn):
     for i in range(2, len(counts)+1):
         best_i_score = score_fn(counts[0:i])
         best_i_split = [0]
-        #print 'i=',i
         for j in range(1, i):
-            #print 'j=',j,counts[j:i]
             score_if_split_at_j = score_fn(counts[j:i])+split_scores[j-1]
             if score_if_split_at_j > best_i_score:
                 best_i_score = score_if_split_at_j
                 best_i_split = split_points[j-1]+[j]
-        #print '---------------'
         split_scores[i-1] = best_i_score
         split_points.append(best_i_split)
     return split_scores[-1], split_points[-1]
@@ -60,6 +57,6 @@ if __name__ == '__main__':
     print points
     #print points2
     print '-------------'
-    counts = np.concatenate([np.random.poisson(15, 100), np.random.poisson(20, 100), np.random.poisson(15, 100)])
+    counts = np.concatenate([np.random.poisson(15, 100), np.random.poisson(1, 50), np.random.poisson(15, 100)])
     points = split_into_segments_square(counts, score_fn)
     print points
