@@ -5,7 +5,7 @@ class LogFactorialComputer:
         return (x-1./2)*np.log(x)-x+(1./2)*np.log(2*np.pi)+\
             1./(12*x) - 1./(360*x**3)
     def __init__(self):
-        self.precomputed = {}
+        self.precomputed = np.zeros(4096)
         for i in range(4096):
             self.precomputed[i] = np.log(np.arange(1, i)).sum()
     def __call__(self, x):
@@ -45,9 +45,6 @@ class LogMarginalLikelyhoodComputer:
         return add1-sub1-sub2
 
 
-#def log_marginal_likelyhood(counts, alpha, beta):
-#    computer = LogMarginalLikelyhoodComputer(counts, alpha, beta)
-#    return computer.log_marginal_likelyhood(0, len(counts))
 
 def split_on_two_segments_or_not(counts, score_computer):
     best_score = score_computer(0, len(counts))
