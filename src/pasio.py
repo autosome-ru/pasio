@@ -44,6 +44,24 @@ class LogMarginalLikelyhoodComputer:
         sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
         return add1-sub1-sub2
 
+    def all_suffixes_score(self, stop):
+        suffixes_score = np.zeros(stop, dtype='float64')
+        for start in range(stop):
+            num_counts = stop-start
+            if stop == 0:
+                sum_counts = 0
+                sum_logs = 0
+            elif start == 0:
+                sum_counts = self.cumsum[stop-1]
+                sum_logs = self.logcumsum[stop-1]
+            else:
+                sum_counts = self.cumsum[stop-1]-self.cumsum[start-1]
+                sum_logs = self.logcumsum[stop-1]-self.logcumsum[start-1]
+            add1 = log_factorial(sum_counts+self.alpha)
+            sub1 = sum_logs
+            sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
+            suffixes_score[start] = add1-sub1-sub2
+        return suffixes_score
 
 
 def split_on_two_segments_or_not(counts, score_computer):
@@ -71,15 +89,10 @@ def split_into_segments_square(counts, score_computer):
     right_borders = np.zeros((len(counts),), dtype=int)
     split_scores[0] = score_computer(0, 1)
     for i in range(2, len(counts)+1):
-        best_i_score = score_computer(0, i)
-        best_i_split = 0
-        for j in range(1, i):
-            score_if_split_at_j = score_computer(j, i)+split_scores[j-1]
-            if score_if_split_at_j > best_i_score:
-                best_i_score = score_if_split_at_j
-                best_i_split = j
-        split_scores[i-1] = best_i_score
-        right_borders[i-1] = best_i_split
+        score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
+        score_if_split_at_[1:] += split_scores[:i-1]
+        right_borders[i-1] = np.argmax(score_if_split_at_)
+        split_scores[i-1] = score_if_split_at_[right_borders[i-1]]
     return split_scores[-1], collect_split_points(right_borders)
 
 if __name__ == '__main__':
