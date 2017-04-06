@@ -62,7 +62,7 @@ class LogMarginalLikelyhoodComputer:
         counts_cumsum[0] = self.cumsum[stop-1]
 
         add1_vec = np.zeros(stop)
-        cumsum_large = counts_cumsum+self.alpha > 4096
+        cumsum_large = counts_cumsum+self.alpha >= 4096
         add1_vec[~cumsum_large] = log_factorial.precomputed[counts_cumsum[~cumsum_large]+self.alpha]
         add1_vec[cumsum_large] = log_factorial.approximate_log_factorial(
                                      counts_cumsum[cumsum_large]+self.alpha)
