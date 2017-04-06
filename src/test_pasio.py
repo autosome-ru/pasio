@@ -6,14 +6,14 @@ import random
 
 def test_stat_split_into_segments_square():
     np.random.seed(2)
-    score_fn = lambda c: pasio.log_marginal_likelyhood(c, 1, 1)
     for repeat in range(10):
         counts = np.concatenate([np.random.poisson(15, 100),
                                  np.random.poisson(20, 100)])
 
-        optimal_split = pasio.split_into_segments_square(counts, score_fn)
+        scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+        optimal_split = pasio.split_into_segments_square(counts, scorer)
 
-        two_split = pasio.split_on_two_segments_or_not(counts, score_fn)
+        two_split = pasio.split_on_two_segments_or_not(counts, scorer)
 
         assert optimal_split[0] >= two_split[0]
         assert two_split[1] in optimal_split[1]
@@ -24,18 +24,25 @@ def test_stat_split_into_segments_square():
 
 
 def test_split_into_segments_square():
-    def score_fn(sequence):
-        if len(set(sequence)) == 1:
-            return len(sequence)**2
-        return 0
+    class SimpleScorer:
+        def __init__(self, sequence):
+            self.sequence = sequence
+        def __call__(self, start=0, stop=None):
+            if stop is None:
+                stop = len(self.sequence)
+            if len(set(self.sequence[start:stop])) == 1:
+                return (stop-start)**2
+            return 0
 
     sequence = 'AAA'
-    optimal_split = pasio.split_into_segments_square(sequence, score_fn)
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     SimpleScorer(sequence))
     assert optimal_split[1] == [0]
     assert optimal_split[0] == 9
 
     sequence = 'AAABBBC'
-    optimal_split = pasio.split_into_segments_square(sequence, score_fn)
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     SimpleScorer(sequence))
     assert optimal_split[1] == [0,3,6]
     assert optimal_split[0] == 9+9+1
 

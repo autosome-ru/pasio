@@ -3,26 +3,24 @@ import numpy as np
 import pasio
 
 
-def compute_log_marginal_likelyhood():
-    counts = np.concatenate([np.random.poisson(15, 50),
-                             np.random.poisson(20, 50)])
-    pasio.log_marginal_likelyhood(counts, 1, 1)
+def compute_log_marginal_likelyhood2(scorer, length):
+    scorer(0, length)
 
-def compute_log_marginal_likelyhood2():
-    counts = np.concatenate([np.random.poisson(200, 50),
-                             np.random.poisson(20, 50)])
-    pasio.log_marginal_likelyhood(counts, 1, 1)
-
-def segmentation200():
-    np.random.seed(2)
-    score_fn = lambda c: pasio.log_marginal_likelyhood(c, 1, 1)
-    counts = np.concatenate([np.random.poisson(15, 50),
-                             np.random.poisson(20, 50)])
-
-    optimal_split = pasio.split_into_segments_square(counts, score_fn)
+def segmentation200(counts, scorer):
+    optimal_split = pasio.split_into_segments_square(counts, scorer)
 
 def test_benchmark_segmentation(benchmark):
-    result = benchmark(segmentation200)
+    np.random.seed(2)
+
+    counts = np.concatenate([np.random.poisson(15, 50),
+                             np.random.poisson(20, 50)])
+
+    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    result = benchmark(segmentation200, counts, scorer)
 
 def test_benchmark_log_marginal_likehood(benchmark):
-    result = benchmark(segmentation200)
+    counts = np.concatenate([np.random.poisson(200, 50),
+                             np.random.poisson(20, 50)])
+    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    result = benchmark(compute_log_marginal_likelyhood2,
+                                scorer,len(counts))
