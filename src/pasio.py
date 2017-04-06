@@ -47,21 +47,30 @@ class LogMarginalLikelyhoodComputer:
 
     def all_suffixes_score(self, stop):
         suffixes_score = np.zeros(stop, dtype='float64')
-        for start in range(stop):
-            num_counts = stop-start
-            if stop == 0:
-                sum_counts = 0
-                sum_logs = 0
-            elif start == 0:
-                sum_counts = self.cumsum[stop-1]
-                sum_logs = self.logfac_cumsum[stop-1]
-            else:
-                sum_counts = self.cumsum[stop-1]-self.cumsum[start-1]
-                sum_logs = self.logfac_cumsum[stop-1]-self.logfac_cumsum[start-1]
-            add1 = log_factorial(sum_counts+self.alpha)
-            sub1 = sum_logs
-            sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
-            suffixes_score[start] = add1-sub1-sub2
+
+        counts_cumsum = np.zeros(stop)
+        counts_cumsum[1:] += self.cumsum[stop-1]-self.cumsum[0:stop-1]
+        counts_cumsum[0] = self.cumsum[stop-1]
+
+        logfac_counts_cumsum = np.zeros(stop)
+        logfac_counts_cumsum[1:] += (self.logfac_cumsum[stop-1]-
+                                     self.logfac_cumsum[0:stop-1])
+        logfac_counts_cumsum[0] = self.logfac_cumsum[stop-1]
+
+        counts_cumsum = np.zeros(stop, dtype='int')
+        counts_cumsum[1:] += self.cumsum[stop-1]-self.cumsum[0:stop-1]
+        counts_cumsum[0] = self.cumsum[stop-1]
+
+        add1_vec = np.zeros(stop)
+        cumsum_large = counts_cumsum+self.alpha > 4096
+        add1_vec[~cumsum_large] = log_factorial.precomputed[counts_cumsum[~cumsum_large]+self.alpha]
+        add1_vec[cumsum_large] = log_factorial.approximate_log_factorial(
+                                     counts_cumsum[cumsum_large]+self.alpha)
+
+        sub2_vec = (counts_cumsum+self.alpha+1)*np.log(stop-np.arange(stop)+self.beta)
+
+        suffixes_score = add1_vec - logfac_counts_cumsum - sub2_vec
+
         return suffixes_score
 
 
