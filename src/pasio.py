@@ -22,24 +22,19 @@ class LogMarginalLikelyhoodComputer:
         self.counts = counts
         self.alpha = alpha
         self.beta = beta
+        self.cumsum = np.cumsum(counts)
+        self.logcumsum = np.cumsum(np.log(counts[counts>0]))
     def __call__(self, start=None, stop=None):
         if start is None:
             start = 0
         if stop is None:
             stop = len(self.counts)
         num_counts = stop-start
-        counts = self.counts[start:stop]
-        counts = counts[counts > 0]
-        sum_counts = counts.sum()
+        sum_counts = self.cumsum[stop-1]-self.cumsum[start]
         add1 = log_factorial(sum_counts+self.alpha)
-        sub1 = np.log(counts).sum()
+        sub1 = self.logcumsum[stop-1]-self.logcumsum[start]
         sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
         return add1-sub1-sub2
-
-
-#def log_marginal_likelyhood(counts, alpha, beta):
-#    computer = LogMarginalLikelyhoodComputer(counts, alpha, beta)
-#    return computer.log_marginal_likelyhood(0, len(counts))
 
 def split_on_two_segments_or_not(counts, score_computer):
     best_score = score_computer(0, len(counts))
@@ -79,7 +74,7 @@ def split_into_segments_square(counts, score_computer):
 
 if __name__ == '__main__':
 
-    counts = np.concatenate([np.random.poisson(15, 1000), np.random.poisson(20, 1000)])
+    counts = np.concatenate([np.random.poisson(15, 2000), np.random.poisson(20, 2000)])
 
     scorer = LogMarginalLikelyhoodComputer(counts, 1, 1)
     points = split_into_segments_square(counts, scorer)
