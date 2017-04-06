@@ -6,10 +6,10 @@ class LogFactorialComputer:
             1./(12*x) - 1./(360*x**3)
     def __init__(self):
         self.precomputed = {}
-        for i in range(256):
+        for i in range(4096):
             self.precomputed[i] = np.log(np.arange(1, i)).sum()
     def __call__(self, x):
-        if x < 256:
+        if x < 4096:
             return self.precomputed[x]
         else:
             return self.approximate_log_factorial(x)
@@ -30,9 +30,6 @@ class LogMarginalLikelyhoodComputer:
         if stop is None:
             stop = len(self.counts)
         num_counts = stop-start
-        counts = self.counts[start:stop]
-        counts = counts[counts > 0]
-        #sum_counts = counts.sum()
         if stop == 0:
             sum_counts = 0
             sum_logs = 0
