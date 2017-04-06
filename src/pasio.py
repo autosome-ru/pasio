@@ -23,7 +23,8 @@ class LogMarginalLikelyhoodComputer:
         self.alpha = alpha
         self.beta = beta
         self.cumsum = np.cumsum(counts)
-        self.logcumsum = np.cumsum(np.log(counts[counts>0]))
+        self.logfac_cumsum = log_factorial.approximate_log_factorial(
+            np.cumsum(np.log(counts[counts>0])))
     def __call__(self, start=None, stop=None):
         if start is None:
             start = 0
@@ -32,15 +33,15 @@ class LogMarginalLikelyhoodComputer:
         num_counts = stop-start
         if stop == 0:
             sum_counts = 0
-            sum_logs = 0
+            sum_log_fac = 0
         elif start == 0:
             sum_counts = self.cumsum[stop-1]
-            sum_logs = self.logcumsum[stop-1]
+            sum_log_fac = self.logfac_cumsum[stop-1]
         else:
             sum_counts = self.cumsum[stop-1]-self.cumsum[start-1]
-            sum_logs = self.logcumsum[stop-1]-self.logcumsum[start-1]
+            sum_log_fac = self.logfac_cumsum[stop-1]-self.logfac_cumsum[start-1]
         add1 = log_factorial(sum_counts+self.alpha)
-        sub1 = sum_logs
+        sub1 = sum_log_fac
         sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
         return add1-sub1-sub2
 
@@ -53,10 +54,10 @@ class LogMarginalLikelyhoodComputer:
                 sum_logs = 0
             elif start == 0:
                 sum_counts = self.cumsum[stop-1]
-                sum_logs = self.logcumsum[stop-1]
+                sum_logs = self.logfac_cumsum[stop-1]
             else:
                 sum_counts = self.cumsum[stop-1]-self.cumsum[start-1]
-                sum_logs = self.logcumsum[stop-1]-self.logcumsum[start-1]
+                sum_logs = self.logfac_cumsum[stop-1]-self.logfac_cumsum[start-1]
             add1 = log_factorial(sum_counts+self.alpha)
             sub1 = sum_logs
             sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
