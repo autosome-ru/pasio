@@ -2,8 +2,7 @@ import numpy as np
 
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
-        return (x-1./2)*np.log(x)-x+(1./2)*np.log(2*np.pi)+\
-            1./(12*x) - 1./(360*x**3)
+        return (x-1./2)*np.log(x) - x + (1./2)*np.log(2*np.pi) + 1./(12*x)
     def __init__(self):
         self.precomputed = np.zeros(4096)
         for i in range(4096):
@@ -106,8 +105,8 @@ def split_into_segments_square(counts, score_computer):
     return split_scores[-1], collect_split_points(right_borders)
 
 if __name__ == '__main__':
-
-    counts = np.concatenate([np.random.poisson(15, 1000), np.random.poisson(20, 1000)])
+    np.random.seed(1024)
+    counts = np.concatenate([np.random.poisson(4096, 10000), np.random.poisson(20, 10000)])
 
     scorer = LogMarginalLikelyhoodComputer(counts, 1, 1)
     points = split_into_segments_square(counts, scorer)
