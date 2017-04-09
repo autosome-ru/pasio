@@ -23,7 +23,8 @@ class LogMarginalLikelyhoodComputer:
         self.alpha = alpha
         self.beta = beta
         self.cumsum = np.cumsum(counts)
-        self.logfac_cumsum = log_factorial.approximate_log_factorial(
+        self.logfac_cumsum = np.zeros(len(counts))
+        self.logfac_cumsum[counts>0] = log_factorial.approximate_log_factorial(
             np.cumsum(np.log(counts[counts>0])))
     def __call__(self, start=None, stop=None):
         if start is None:

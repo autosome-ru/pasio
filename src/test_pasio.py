@@ -23,7 +23,6 @@ def test_stat_split_into_segments_square():
         else:
             assert abs(two_split[1]-100) < 10
 
-
 def test_split_into_segments_square():
     class SimpleScorer:
         def __init__(self, sequence):
@@ -63,6 +62,11 @@ def test_suffixes_scores():
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
     suffixes_scores = [scorer(i, 150) for i in range(150)]
     assert np.allclose(scorer.all_suffixes_score(150), np.array(suffixes_scores))
+
+    counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0])
+    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    suffixes_scores = [scorer(i, len(counts)-1) for i in range(len(counts)-1)]
+    assert np.allclose(scorer.all_suffixes_score(len(counts)-1), np.array(suffixes_scores))
 
 
 def compute_log_marginal_likelyhood2(scorer, length):
