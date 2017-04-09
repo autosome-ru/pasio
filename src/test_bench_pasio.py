@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pasio
+import random
 
 
 def compute_log_marginal_likelyhood2(scorer, length):
@@ -24,3 +25,13 @@ def test_benchmark_log_marginal_likehood(benchmark):
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
     result = benchmark(compute_log_marginal_likelyhood2,
                                 scorer,len(counts))
+
+def test_benchmark_bedgraph_parser(benchmark, tmpdir):
+    bedgraph_file = tmpdir.mkdir("sub").join("test.bedgraph")
+    random.seed(0)
+    previous_i = 0
+    for i in range(1, 100000):
+        if random.randint(0,10)==5:
+            bedgraph_file.write('chr1 %d %d %d\n' % (previous_i, i, 1000))
+
+    chromosomes = benchmark(pasio.parse_bedgrah, str(bedgraph_file))
