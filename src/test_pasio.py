@@ -2,6 +2,7 @@ import pytest
 import pasio
 import numpy as np
 import random
+import tempfile
 
 
 def test_stat_split_into_segments_square():
@@ -74,3 +75,28 @@ def test_collect_split_points():
     assert pasio.collect_split_points([0,0,0,0,2,3,4]) == [0,4]
     assert pasio.collect_split_points([0,0,2,1,4]) == [0,1,4]
     assert pasio.collect_split_points([0,0,2,1,3]) == [0,2,3]
+
+def test_bedgraph_reader(tmpdir):
+    bedgraph_file = tmpdir.mkdir("sub").join("test.bedgraph")
+    bedgraph_file.write(
+        '''chr1 0 10 0
+        chr1 10 22 21
+        chr1 22 23 30
+        chr1 23 50 0
+        chr2 0 15 0
+        chr2 15 50 2
+        chr2 50 60 0
+        ''')
+    chromosomes = pasio.parse_bedgrah(str(bedgraph_file))
+    assert len(chromosomes) == 2
+    assert len(chromosomes['chr1']) == 50
+    assert np.all(chromosomes['chr1'][0:10] == 0)
+    assert np.all(chromosomes['chr1'][10:22] == 21)
+    assert chromosomes['chr1'][22] == 30
+    assert np.all(chromosomes['chr1'][23:50] == 0)
+
+    assert len(chromosomes['chr2']) == 60
+    assert np.all(chromosomes['chr2'][0:15] == 0)
+    assert np.all(chromosomes['chr2'][15:50] == 2)
+    assert np.all(chromosomes['chr2'][50:60] == 0)
+

@@ -1,4 +1,5 @@
 import numpy as np
+import array
 
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
@@ -103,6 +104,23 @@ def split_into_segments_square(counts, score_computer):
         right_borders[i-1] = np.argmax(score_if_split_at_)
         split_scores[i-1] = score_if_split_at_[right_borders[i-1]]
     return split_scores[-1], collect_split_points(right_borders)
+
+def parse_bedgrah(filename):
+    chromosomes = {}
+    with open(filename) as bedgrpah_file:
+        for line in bedgrpah_file:
+            if line.strip() == '':
+                continue
+            chrom, start, stop, coverage = line.strip().split()
+            start = int(start)
+            stop = int(stop)
+            coverage = int(coverage)
+            if chrom not in chromosomes:
+                chromosomes[chrom] = array.array('l')
+            chromosomes[chrom].extend([coverage]*(stop-start))
+    for chrom in chromosomes:
+        chromosomes[chrom] = np.array(chromosomes[chrom])
+    return chromosomes
 
 if __name__ == '__main__':
     np.random.seed(1024)
