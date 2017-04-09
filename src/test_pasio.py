@@ -53,6 +53,10 @@ def test_approximate_log_factorial():
     assert np.log(np.arange(1, 256)).sum() == pasio.log_factorial(256)
     assert np.log(np.arange(1, 10000)).sum() == pasio.log_factorial(10000)
 
+    array_to_count = np.array([0,1,20,1024,10000])
+    logfac_array = np.array([np.log(np.arange(1, x)).sum() for x in array_to_count])
+    assert np.allclose(pasio.log_factorial(array_to_count), logfac_array)
+
 
 def test_suffixes_scores():
     np.random.seed(2)
@@ -63,7 +67,7 @@ def test_suffixes_scores():
     suffixes_scores = [scorer(i, 150) for i in range(150)]
     assert np.allclose(scorer.all_suffixes_score(150), np.array(suffixes_scores))
 
-    counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0])
+    counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0], dtype='int64')
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
     suffixes_scores = [scorer(i, len(counts)-1) for i in range(len(counts)-1)]
     assert np.allclose(scorer.all_suffixes_score(len(counts)-1), np.array(suffixes_scores))

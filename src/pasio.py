@@ -9,10 +9,17 @@ class LogFactorialComputer:
         for i in range(4096):
             self.precomputed[i] = np.log(np.arange(1, i)).sum()
     def __call__(self, x):
-        if x < 4096:
-            return self.precomputed[x]
+        if type(x) is np.ndarray:
+            log_factorial = np.zeros(x.shape)
+            is_small = x < 4096
+            log_factorial[is_small] = self.precomputed[x[is_small]]
+            log_factorial[~is_small] = self.approximate_log_factorial(x[~is_small])
+            return log_factorial
         else:
-            return self.approximate_log_factorial(x)
+            if x < 4096:
+                return self.precomputed[x]
+            else:
+                return self.approximate_log_factorial(x)
 
 
 log_factorial = LogFactorialComputer()
@@ -23,9 +30,7 @@ class LogMarginalLikelyhoodComputer:
         self.alpha = alpha
         self.beta = beta
         self.cumsum = np.cumsum(counts)
-        self.logfac_cumsum = np.zeros(len(counts))
-        self.logfac_cumsum[counts>0] = log_factorial.approximate_log_factorial(
-            np.cumsum(np.log(counts[counts>0])))
+        self.logfac_cumsum = np.cumsum(log_factorial(counts))
     def __call__(self, start=None, stop=None):
         if start is None:
             start = 0
@@ -62,11 +67,7 @@ class LogMarginalLikelyhoodComputer:
         counts_cumsum[1:] += self.cumsum[stop-1]-self.cumsum[0:stop-1]
         counts_cumsum[0] = self.cumsum[stop-1]
 
-        add1_vec = np.zeros(stop)
-        cumsum_large = counts_cumsum+self.alpha >= 4096
-        add1_vec[~cumsum_large] = log_factorial.precomputed[counts_cumsum[~cumsum_large]+self.alpha]
-        add1_vec[cumsum_large] = log_factorial.approximate_log_factorial(
-                                     counts_cumsum[cumsum_large]+self.alpha)
+        add1_vec = log_factorial(counts_cumsum+self.alpha)
 
         sub2_vec = (counts_cumsum+self.alpha+1)*np.log(stop-np.arange(stop)+self.beta)
 
