@@ -76,7 +76,8 @@ class LogMarginalLikelyhoodComputer:
         return suffixes_score
 
 
-def split_on_two_segments_or_not(counts, score_computer):
+def split_on_two_segments_or_not(counts, scorer_factory):
+    score_computer = scorer_factory(counts)
     best_score = score_computer(0, len(counts))
     split_point = None
     for i in range(len(counts)):
@@ -96,7 +97,8 @@ def collect_split_points(right_borders):
         split_points_collected.append(split_point)
     return split_points_collected[::-1]
 
-def split_into_segments_square(counts, score_computer):
+def split_into_segments_square(counts, scorer_factory):
+    score_computer = scorer_factory(counts)
     split_scores = np.zeros((len(counts),))
     right_borders = np.zeros((len(counts),), dtype=int)
     split_scores[0] = score_computer(0, 1)
@@ -128,6 +130,6 @@ if __name__ == '__main__':
     np.random.seed(1024)
     counts = np.concatenate([np.random.poisson(4096, 10000), np.random.poisson(20, 10000)])
 
-    scorer = LogMarginalLikelyhoodComputer(counts, 1, 1)
-    points = split_into_segments_square(counts, scorer)
+    scorer_factory = lambda counts: LogMarginalLikelyhoodComputer(counts, 1, 1)
+    points = split_into_segments_square(counts, scorer_factory)
     print points

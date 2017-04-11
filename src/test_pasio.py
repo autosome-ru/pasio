@@ -7,14 +7,14 @@ import tempfile
 
 def test_stat_split_into_segments_square():
     np.random.seed(2)
+    scorer_factory = lambda counts: pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
     for repeat in range(10):
         counts = np.concatenate([np.random.poisson(15, 100),
                                  np.random.poisson(20, 100)])
 
-        scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-        optimal_split = pasio.split_into_segments_square(counts, scorer)
+        optimal_split = pasio.split_into_segments_square(counts, scorer_factory)
 
-        two_split = pasio.split_on_two_segments_or_not(counts, scorer)
+        two_split = pasio.split_on_two_segments_or_not(counts, scorer_factory)
 
         assert optimal_split[0] >= two_split[0]
         assert two_split[1] in optimal_split[1]
@@ -38,13 +38,13 @@ def test_split_into_segments_square():
 
     sequence = 'AAA'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     SimpleScorer(sequence))
+                                                     lambda s:SimpleScorer(s))
     assert optimal_split[1] == [0]
     assert optimal_split[0] == 9
 
     sequence = 'AAABBBC'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     SimpleScorer(sequence))
+                                                     lambda s:SimpleScorer(s))
     assert optimal_split[1] == [0,3,6]
     assert optimal_split[0] == 9+9+1
 
