@@ -96,15 +96,19 @@ def collect_split_points(right_borders):
         split_points_collected.append(split_point)
     return split_points_collected[::-1]
 
-def split_into_segments_square(counts, score_computer):
+def split_into_segments_square(counts, score_computer, regularisation_function=None):
+    if regularisation_function is None:
+        regularisation_function = lambda x: 0
     split_scores = np.zeros((len(counts),))
     right_borders = np.zeros((len(counts),), dtype=int)
+    num_splits = np.zeros((len(counts),))
     split_scores[0] = score_computer(0, 1)
     for i in range(2, len(counts)+1):
         score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
         score_if_split_at_[1:] += split_scores[:i-1]
         right_borders[i-1] = np.argmax(score_if_split_at_)
-        split_scores[i-1] = score_if_split_at_[right_borders[i-1]]
+        num_splits[i-1] = num_splits[right_borders[i-1]] + 1
+        split_scores[i-1] = score_if_split_at_[right_borders[i-1]] + regularisation_function(num_splits[i-1])
     return split_scores[-1], collect_split_points(right_borders)
 
 def parse_bedgrah(filename):
