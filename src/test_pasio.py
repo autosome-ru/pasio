@@ -48,6 +48,31 @@ def test_split_into_segments_square():
     assert optimal_split[1] == [0,3,6]
     assert optimal_split[0] == 9+9+1
 
+def test_split_with_regularisation():
+    class SimpleScorer:
+        def __init__(self, sequence):
+            self.sequence = sequence
+        def __call__(self, start=0, stop=None):
+            if stop is None:
+                stop = len(self.sequence)
+            if len(set(self.sequence[start:stop])) == 1:
+                return (stop-start)**2
+            return stop-start
+        def all_suffixes_score(self, stop):
+            return np.array([self(i, stop) for i in range(stop)])
+
+    # score of split 'AAA|B|AA' = 9+1+4 = 14
+    # with regularisation = 9+1+4 - 3*2 = 8
+    # alternative split: 'AAA|BAA' gives score = 9+3-3*1 = 9
+    sequence = 'AAABAA'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     SimpleScorer(sequence),
+                                                     regularisation_multiplyer = 3,
+                                                     regularisation_function = lambda x:x)
+    assert optimal_split[1] == [0,3]
+    assert optimal_split[0] == 9
+
+
 
 def test_approximate_log_factorial():
     assert np.log(np.arange(1, 256)).sum() == pasio.log_factorial(256)
