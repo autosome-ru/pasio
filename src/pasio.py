@@ -104,16 +104,14 @@ def split_into_segments_square(counts, score_computer, regularisation_multiplyer
     right_borders = np.zeros((len(counts),), dtype=int)
     num_splits = np.zeros((len(counts),))
     split_scores[0] = score_computer(0, 1)
-    for i in range(2, len(counts)+1):
-        score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
-        score_if_split_at_[1:] += split_scores[:i-1]
-        score_if_split_at_ -= regularisation_multiplyer*regularisation_function(num_splits[:i])
-        right_borders[i-1] = np.argmax(score_if_split_at_)
-        print i-1, right_borders[i-1], num_splits[right_borders[i-1]-1] + 1
-        num_splits[i-1] = num_splits[right_borders[i-1]] + 1
-        split_scores[i-1] = score_if_split_at_[right_borders[i-1]]
-    print num_splits
-    print split_scores
+    for i in range(1, len(counts)):
+        score_if_split_at_ = score_computer.all_suffixes_score(i+1).astype('float64')
+        score_if_split_at_[1:] += split_scores[:i]
+        score_if_split_at_[1:] -= regularisation_multiplyer*(regularisation_function(num_splits[:i]+1))
+        right_borders[i] = np.argmax(score_if_split_at_)
+        if right_borders[i] != 0:
+            num_splits[i] = num_splits[right_borders[i]-1] + 1
+        split_scores[i] = score_if_split_at_[right_borders[i]]
     return split_scores[-1], collect_split_points(right_borders)
 
 def parse_bedgrah(filename):
