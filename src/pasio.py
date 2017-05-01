@@ -3,11 +3,11 @@ import array
 
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
-        return (x-1./2)*np.log(x) - x + (1./2)*np.log(2*np.pi) + 1./(12*x)
+        return (x+1./2)*np.log(x) - x + (1./2)*np.log(2*np.pi) + 1./(12*x)
     def __init__(self):
         self.precomputed = np.zeros(4096)
         for i in range(4096):
-            self.precomputed[i] = np.log(np.arange(1, i)).sum()
+            self.precomputed[i] = np.log(np.arange(1, i+1)).sum()
     def __call__(self, x):
         if type(x) is np.ndarray:
             log_factorial = np.zeros(x.shape)

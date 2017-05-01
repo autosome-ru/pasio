@@ -75,11 +75,15 @@ def test_split_with_regularisation():
 
 
 def test_approximate_log_factorial():
-    assert np.log(np.arange(1, 256)).sum() == pasio.log_factorial(256)
-    assert np.log(np.arange(1, 10000)).sum() == pasio.log_factorial(10000)
+    assert np.log(np.arange(1, 256+1)).sum() == pasio.log_factorial(256)
+    assert np.log(np.arange(1, 4095+1)).sum() == pasio.log_factorial(4095)
+    assert np.allclose(np.log(np.arange(1, 4096+1)).sum(),
+                       pasio.log_factorial(4096))
+    assert np.log(np.arange(1, 4097+1)).sum() == pasio.log_factorial(4097)
+    assert np.log(np.arange(1, 10000+1)).sum() == pasio.log_factorial(10000)
 
     array_to_count = np.array([0,1,20,1024,10000])
-    logfac_array = np.array([np.log(np.arange(1, x)).sum() for x in array_to_count])
+    logfac_array = np.array([np.log(np.arange(1, x+1)).sum() for x in array_to_count])
     assert np.allclose(pasio.log_factorial(array_to_count), logfac_array)
 
 
