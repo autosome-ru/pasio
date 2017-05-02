@@ -76,12 +76,13 @@ class LogMarginalLikelyhoodComputer:
         return suffixes_score
 
 
-def split_on_two_segments_or_not(counts, score_computer):
-    best_score = score_computer(0, len(counts))
+def split_on_two_segments_or_not(counts, scorer_factory):
+    scorer = scorer_factory(counts)
+    best_score = scorer(0, len(counts))
     split_point = None
     for i in range(len(counts)):
-        current_score = score_computer(stop=i)
-        current_score += score_computer(start=i)
+        current_score = scorer(stop=i)
+        current_score += scorer(start=i)
         if current_score > best_score:
             split_point = i
             best_score = current_score
@@ -96,10 +97,11 @@ def collect_split_points(right_borders):
         split_points_collected.append(split_point)
     return split_points_collected[::-1]
 
-def split_into_segments_square(counts, score_computer, regularisation_multiplyer = 0,
+def split_into_segments_square(counts, score_computer_factory, regularisation_multiplyer = 0,
                                regularisation_function=None):
     if regularisation_function is None:
         regularisation_function = lambda x: x
+    score_computer = score_computer_factory(counts)
     split_scores = np.zeros((len(counts),))
     right_borders = np.zeros((len(counts),), dtype=int)
     num_splits = np.zeros((len(counts),))
@@ -133,8 +135,8 @@ def parse_bedgrah(filename):
 
 if __name__ == '__main__':
     np.random.seed(1024)
-    counts = np.concatenate([np.random.poisson(4096, 10000), np.random.poisson(20, 10000)])
+    counts = np.concatenate([np.random.poisson(4096, 1000), np.random.poisson(20, 1000)])
 
-    scorer = LogMarginalLikelyhoodComputer(counts, 1, 1)
-    points = split_into_segments_square(counts, scorer)
+    scorer_factory = lambda c: LogMarginalLikelyhoodComputer(c, 1, 1)
+    points = split_into_segments_square(counts, scorer_factory)
     print points
