@@ -137,6 +137,6 @@ if __name__ == '__main__':
     np.random.seed(1024)
     counts = np.concatenate([np.random.poisson(4096, 1000), np.random.poisson(20, 1000)])
 
-    scorer_factory = lambda c: LogMarginalLikelyhoodComputer(c, 1, 1)
+    scorer_factory = lambda counts: LogMarginalLikelyhoodComputer(counts, 1, 1)
     points = split_into_segments_square(counts, scorer_factory)
     print points
