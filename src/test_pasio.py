@@ -36,17 +36,70 @@ def test_split_into_segments_square():
         def all_suffixes_score(self, stop):
             return np.array([self(i, stop) for i in range(stop)])
 
+
+    sequence = 'A'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     lambda s:SimpleScorer(s))
+    assert optimal_split[1] == [0]
+    assert optimal_split[0] == 1
+
     sequence = 'AAA'
     optimal_split = pasio.split_into_segments_square(sequence,
                                                      lambda s:SimpleScorer(s))
     assert optimal_split[1] == [0]
     assert optimal_split[0] == 9
 
+    sequence = 'AAABBB'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     lambda s:SimpleScorer(s))
+    assert optimal_split[1] == [0,3]
+    assert optimal_split[0] == 9+9
+
     sequence = 'AAABBBC'
     optimal_split = pasio.split_into_segments_square(sequence,
                                                      lambda s:SimpleScorer(s))
     assert optimal_split[1] == [0,3,6]
     assert optimal_split[0] == 9+9+1
+
+    sequence = 'ABBBC'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     lambda s:SimpleScorer(s))
+    assert optimal_split[1] == [0,1,4]
+    assert optimal_split[0] == 1+9+1
+
+
+def test_split_into_segments_candidates():
+    class SimpleScorer:
+        def __init__(self, sequence):
+            self.sequence = sequence
+        def __call__(self, start=0, stop=None):
+            if stop is None:
+                stop = len(self.sequence)
+            if len(set(self.sequence[start:stop])) == 1:
+                return (stop-start)**2
+            return 0
+        def all_suffixes_score(self, stop):
+            return np.array([self(i, stop) for i in range(stop)])
+
+
+    sequence = 'AAABBB'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     lambda s:SimpleScorer(s),
+                                                     split_candidates=[0,3])
+    assert optimal_split[1] == [0,3]
+    assert optimal_split[0] == 9+9
+
+#    sequence = 'AAABBBC'
+#    optimal_split = pasio.split_into_segments_square(sequence,
+#                                                     lambda s:SimpleScorer(s))
+#    assert optimal_split[1] == [0,3,6]
+#    assert optimal_split[0] == 9+9+1
+#
+#    sequence = 'ABBBC'
+#    optimal_split = pasio.split_into_segments_square(sequence,
+#                                                     lambda s:SimpleScorer(s))
+#    assert optimal_split[1] == [0,1,4]
+#    assert optimal_split[0] == 1+9+1
 
 def test_split_with_regularisation():
     class SimpleScorer:

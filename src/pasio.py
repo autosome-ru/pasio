@@ -97,24 +97,36 @@ def collect_split_points(right_borders):
         split_points_collected.append(split_point)
     return split_points_collected[::-1]
 
-def split_into_segments_square(counts, score_computer_factory, regularisation_multiplyer = 0,
-                               regularisation_function=None):
+def split_into_segments_square(counts, score_computer_factory, regularisation_multiplyer=0,
+                               regularisation_function=None, split_candidates=None):
     if regularisation_function is None:
         regularisation_function = lambda x: x
+    if split_candidates is None:
+        split_candidates = range(1, len(counts)+1)
     score_computer = score_computer_factory(counts)
-    split_scores = np.zeros((len(counts),))
-    right_borders = np.zeros((len(counts),), dtype=int)
-    num_splits = np.zeros((len(counts),))
-    split_scores[0] = score_computer(0, 1)
-    for i in range(1, len(counts)):
-        score_if_split_at_ = score_computer.all_suffixes_score(i+1).astype('float64')
-        score_if_split_at_[1:] += split_scores[:i]
-        score_if_split_at_[1:] -= regularisation_multiplyer*(regularisation_function(num_splits[:i]+1))
+    split_scores = np.zeros((len(counts)+1,))
+    right_borders = np.zeros((len(counts)+1,), dtype=int)
+    num_splits = np.zeros((len(counts)+1,))
+    split_scores[0] = 0
+    split_scores[1] = score_computer(0, 1)
+    for i, split in enumerate(split_candidates, 1):
+        print '--------------------------------'
+        score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
+        print score_if_split_at_, split_scores[:i]
+        score_if_split_at_ += split_scores[:i]
+
+        print score_if_split_at_
+        score_if_split_at_[:] -= regularisation_multiplyer*(regularisation_function(num_splits[:i]+1))
+        score_if_split_at_[0] += regularisation_multiplyer*regularisation_function(1)
+        print score_if_split_at_, num_splits[:i]
         right_borders[i] = np.argmax(score_if_split_at_)
         if right_borders[i] != 0:
-            num_splits[i] = num_splits[right_borders[i]-1] + 1
+            num_splits[i] = num_splits[right_borders[i]] + 1
         split_scores[i] = score_if_split_at_[right_borders[i]]
-    return split_scores[-1], collect_split_points(right_borders)
+        print counts[0:i], num_splits[i], split_scores[i], right_borders[i]
+        print num_splits[:]
+        print split_scores[:]
+    return split_scores[-1], collect_split_points(right_borders[1:])
 
 def parse_bedgrah(filename):
     chromosomes = {}
