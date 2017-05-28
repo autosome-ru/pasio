@@ -6,9 +6,9 @@ import tempfile
 
 
 def test_stat_split_into_segments_square():
-    np.random.seed(2)
+    np.random.seed(1)
     scorer_factory = lambda counts: pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    for repeat in range(10):
+    for repeat in range(5):
         counts = np.concatenate([np.random.poisson(15, 100),
                                  np.random.poisson(20, 100)])
 
