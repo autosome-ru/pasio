@@ -6,8 +6,9 @@ import tempfile
 
 
 def test_stat_split_into_segments_square():
-    np.random.seed(1)
-    scorer_factory = lambda counts: pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    np.random.seed(4)
+    scorer_factory = lambda counts, split_candidates=None: pasio.LogMarginalLikelyhoodComputer(
+        counts, 1, 1, split_candidates)
     for repeat in range(5):
         counts = np.concatenate([np.random.poisson(15, 100),
                                  np.random.poisson(20, 100)])
@@ -23,97 +24,96 @@ def test_stat_split_into_segments_square():
         else:
             assert abs(two_split[1]-100) < 10
 
+class SimpleScorer:
+    def __init__(self, sequence, split_candidates=None):
+        self.sequence = sequence
+        if split_candidates is None:
+            split_candidates = range(len(self.sequence)+1)
+        self.split_candidates = split_candidates
+    def __call__(self, start=0, stop=None):
+        start = self.split_candidates[start]
+        if stop is None:
+            stop = self.split_candidates[-1]
+        else:
+            stop = self.split_candidates[stop]
+        if len(set(self.sequence[start:stop])) == 1:
+            return (stop-start)**2
+        return stop-start
+    def all_suffixes_score(self, stop):
+        return np.array([self(i, stop) for i in range(stop)])
+
+simple_scorer_factory = lambda counts, split_candidates=None: SimpleScorer(counts, split_candidates)
+
 def test_split_into_segments_square():
-    class SimpleScorer:
-        def __init__(self, sequence):
-            self.sequence = sequence
-        def __call__(self, start=0, stop=None):
-            if stop is None:
-                stop = len(self.sequence)
-            if len(set(self.sequence[start:stop])) == 1:
-                return (stop-start)**2
-            return 0
-        def all_suffixes_score(self, stop):
-            return np.array([self(i, stop) for i in range(stop)])
-
-
     sequence = 'A'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     lambda s:SimpleScorer(s))
+                                                     simple_scorer_factory)
     assert optimal_split[1] == [0]
     assert optimal_split[0] == 1
 
     sequence = 'AAA'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     lambda s:SimpleScorer(s))
+                                                     simple_scorer_factory)
     assert optimal_split[1] == [0]
     assert optimal_split[0] == 9
 
     sequence = 'AAABBB'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     lambda s:SimpleScorer(s))
+                                                     simple_scorer_factory)
     assert optimal_split[1] == [0,3]
     assert optimal_split[0] == 9+9
 
     sequence = 'AAABBBC'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     lambda s:SimpleScorer(s))
+                                                     simple_scorer_factory)
     assert optimal_split[1] == [0,3,6]
     assert optimal_split[0] == 9+9+1
 
     sequence = 'ABBBC'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     lambda s:SimpleScorer(s))
+                                                     simple_scorer_factory)
     assert optimal_split[1] == [0,1,4]
     assert optimal_split[0] == 1+9+1
 
 
 def test_split_into_segments_candidates():
-    class SimpleScorer:
-        def __init__(self, sequence):
-            self.sequence = sequence
-        def __call__(self, start=0, stop=None):
-            if stop is None:
-                stop = len(self.sequence)
-            if len(set(self.sequence[start:stop])) == 1:
-                return (stop-start)**2
-            return 0
-        def all_suffixes_score(self, stop):
-            return np.array([self(i, stop) for i in range(stop)])
-
 
     sequence = 'AAABBB'
     optimal_split = pasio.split_into_segments_square(sequence,
-                                                     lambda s:SimpleScorer(s),
-                                                     split_candidates=[0,3])
+                                                     simple_scorer_factory,
+                                                     split_candidates=[0,1,2,3,5,6])
     assert optimal_split[1] == [0,3]
     assert optimal_split[0] == 9+9
 
-#    sequence = 'AAABBBC'
-#    optimal_split = pasio.split_into_segments_square(sequence,
-#                                                     lambda s:SimpleScorer(s))
-#    assert optimal_split[1] == [0,3,6]
-#    assert optimal_split[0] == 9+9+1
-#
-#    sequence = 'ABBBC'
-#    optimal_split = pasio.split_into_segments_square(sequence,
-#                                                     lambda s:SimpleScorer(s))
-#    assert optimal_split[1] == [0,1,4]
-#    assert optimal_split[0] == 1+9+1
+    sequence = 'AAABBB'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     simple_scorer_factory,
+                                                     split_candidates=[0,3,5,6])
+    assert optimal_split[1] == [0,3]
+    assert optimal_split[0] == 9+9
+
+    sequence = 'AAABBBC'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     simple_scorer_factory,
+                                                     split_candidates=[0,3,7])
+    assert optimal_split[1] == [0,3]
+    assert optimal_split[0] == 9+4
+
+    sequence = 'AAABBBC'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     simple_scorer_factory,
+                                                     split_candidates=[0,3])
+    assert optimal_split[1] == [0,3]
+    assert optimal_split[0] == 9+4
+
+    sequence = 'AAAAAA'
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     simple_scorer_factory,
+                                                     split_candidates=[0,3])
+    assert optimal_split[1] == [0]
+    assert optimal_split[0] == 36
 
 def test_split_with_regularisation():
-    class SimpleScorer:
-        def __init__(self, sequence):
-            self.sequence = sequence
-        def __call__(self, start=0, stop=None):
-            if stop is None:
-                stop = len(self.sequence)
-            if len(set(self.sequence[start:stop])) == 1:
-                return (stop-start)**2
-            return stop-start
-        def all_suffixes_score(self, stop):
-            return np.array([self(i, stop) for i in range(stop)])
-
     # score of split 'AAA|B|AA' = 9+1+4 = 14
     # with regularisation = 9+1+4 - 3*2 = 8
     # alternative split: 'AAA|BAA' gives score = 9+3-3*1 = 9
@@ -154,6 +154,28 @@ def test_suffixes_scores():
     suffixes_scores = [scorer(i, len(counts)-1) for i in range(len(counts)-1)]
     assert np.allclose(scorer.all_suffixes_score(len(counts)-1), np.array(suffixes_scores))
 
+def test_suffixes_scores_with_candidates():
+    np.random.seed(2)
+    counts = np.arange(1,10)
+    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    candidates = np.array([0,1,3,4,5,6,7,8,9])
+    scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(
+        counts, 1, 1,
+        split_candidates = candidates)
+    candidate_suffixes = scorer.all_suffixes_score(9)[candidates[:-1]]
+    suffixes_just_candidates = scorer_with_candidates.all_suffixes_score(8)
+    assert np.allclose(candidate_suffixes, suffixes_just_candidates)
+
+    counts = np.concatenate([np.random.poisson(15, 100),
+                             np.random.poisson(20, 100)])
+    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    candidates = np.array([0,1,10,20,21,30,40, 149])
+    scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(
+        counts, 1, 1,
+        split_candidates = candidates)
+    candidate_suffixes = scorer.all_suffixes_score(149)[candidates[:-1]]
+    suffixes_just_candidates = scorer_with_candidates.all_suffixes_score(len(candidates)-1)
+    assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
 def compute_log_marginal_likelyhood2(scorer, length):
     scorer(0, length)

@@ -16,7 +16,8 @@ def test_benchmark_segmentation(benchmark):
     counts = np.concatenate([np.random.poisson(15, 50),
                              np.random.poisson(20, 50)])
 
-    scorer_factory = lambda counts : pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
+    scorer_factory = lambda counts, split_candidates=None : pasio.LogMarginalLikelyhoodComputer(
+        counts, 1, 1, split_candidates)
     result = benchmark(segmentation200, counts, scorer_factory)
 
 def test_benchmark_log_marginal_likehood(benchmark):
