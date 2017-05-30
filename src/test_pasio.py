@@ -19,6 +19,8 @@ def test_stat_split_into_segments_square():
 
         assert optimal_split[0] >= two_split[0]
         assert two_split[1] in optimal_split[1]
+        assert optimal_split[0] == pasio.compute_score_from_splits(
+            counts, optimal_split[1], scorer_factory)
         if (two_split[1] is None):
             assert optimal_split[1] == [0,200]
         else:

@@ -79,6 +79,14 @@ class LogMarginalLikelyhoodComputer:
 
         return suffixes_score
 
+def compute_score_from_splits(counts, splits, scorer_factory):
+    scorer = scorer_factory(counts)
+    sum_scores = 0
+    for start, stop in zip(splits, splits[1:]):
+        sum_scores += scorer(start, stop)
+        print start, stop, scorer(start, stop)
+    sum_scores+=scorer(start = splits[-1])
+    return sum_scores
 
 def split_on_two_segments_or_not(counts, scorer_factory):
     scorer = scorer_factory(counts)
