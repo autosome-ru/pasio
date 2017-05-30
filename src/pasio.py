@@ -1,5 +1,5 @@
 import numpy as np
-import array
+import argparse
 
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
@@ -113,6 +113,7 @@ def split_into_segments_square(counts, score_computer_factory,
                                regularisation_multiplyer=0,
                                regularisation_function=None,
                                split_candidates=None):
+    print counts,
     if regularisation_function is None:
         regularisation_function = lambda x: x
     if split_candidates is None:
@@ -138,9 +139,29 @@ def split_into_segments_square(counts, score_computer_factory,
         score_if_split_at_[0] += regularisation_multiplyer*regularisation_function(1)
         right_borders[i] = np.argmax(score_if_split_at_)
         if right_borders[i] != 0:
-            num_splits[i] = num_splits[right_borders[i]] + 1
+            num_splits[i]= num_splits[right_borders[i]] + 1
         split_scores[i] = score_if_split_at_[right_borders[i]]
+    print split_scores[-1]
     return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
+
+def split_into_segments_slidingwindow(
+        counts, score_computer_factory,
+        window_size, window_shift,
+        regularisation_multiplyer=0,
+        regularisation_function=None):
+    split_points = set([0])
+    for start in range(0, len(counts), window_shift):
+        stop = min(start+window_size, len(counts))
+        segment_score, segment_split_points = split_into_segments_square(
+            counts[start:stop], score_computer_factory,
+            regularisation_multiplyer,
+            regularisation_function=None)
+        split_points.update(segment_split_points)
+    return split_into_segments_square(
+            counts, score_computer_factory,
+            regularisation_multiplyer,
+            regularisation_function,
+            split_candidates=sorted(split_points))
 
 def parse_bedgrah(filename):
     chromosomes = {}
@@ -160,9 +181,6 @@ def parse_bedgrah(filename):
     return chromosomes
 
 if __name__ == '__main__':
-    np.random.seed(1024)
-    counts = np.concatenate([np.random.poisson(4096, 1000), np.random.poisson(20, 1000)])
-
     scorer_factory = lambda counts, split_candidates=None: LogMarginalLikelyhoodComputer(
         counts, 1, 1, split_candidates = split_candidates)
     points = split_into_segments_square(counts, scorer_factory)

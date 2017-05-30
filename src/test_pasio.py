@@ -214,3 +214,13 @@ def test_bedgraph_reader(tmpdir):
     assert np.all(chromosomes['chr2'][15:50] == 2)
     assert np.all(chromosomes['chr2'][50:60] == 0)
 
+
+def test_split_into_segments_slidingwindow():
+    sequence = 'AAAAAAABBBBBB'
+    splits = pasio.split_into_segments_slidingwindow(sequence, simple_scorer_factory, 10, 5)
+    assert splits[1] == [0,7]
+    assert splits[0] == 6**2+7**2
+
+    splits = pasio.split_into_segments_slidingwindow(sequence, simple_scorer_factory, 10, 5, 2)
+    assert splits[1] == [0,7]
+    assert splits[0] == 6**2+7**2-2
