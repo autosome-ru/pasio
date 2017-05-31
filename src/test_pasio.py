@@ -190,7 +190,7 @@ def test_collect_split_points():
     assert pasio.collect_split_points([0,0,2,1,4]) == [0,1,4]
     assert pasio.collect_split_points([0,0,2,1,3]) == [0,2,3]
 
-def test_bedgraph_reader(tmpdir):
+def bedgraph_reader(tmpdir):
     bedgraph_file = tmpdir.mkdir("sub").join("test.bedgraph")
     bedgraph_file.write(
         '''chr1 0 10 0
@@ -216,11 +216,13 @@ def test_bedgraph_reader(tmpdir):
 
 
 def test_split_into_segments_slidingwindow():
-    sequence = 'AAAAAAABBBBBB'
+    A = 'AAAAAAAAAAAAAAAA'
+    B = 'BBBBBBBBBBBBBBBBB'
+    sequence = A+B
     splits = pasio.split_into_segments_slidingwindow(sequence, simple_scorer_factory, 10, 5)
-    assert splits[1] == [0,7]
-    assert splits[0] == 6**2+7**2
+    assert splits[1] == [0, len(A)]
+    assert splits[0] == len(A)**2+len(B)**2
 
     splits = pasio.split_into_segments_slidingwindow(sequence, simple_scorer_factory, 10, 5, 2)
-    assert splits[1] == [0,7]
-    assert splits[0] == 6**2+7**2-2
+    assert splits[1] == [0, len(A)]
+    assert splits[0] == len(A)**2+len(B)**2-2

@@ -1,5 +1,16 @@
 import numpy as np
 import argparse
+import array
+import logging
+
+logger = logging.getLogger(__name__)
+stderr = logging.StreamHandler()
+stderr.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+stderr.setFormatter(formatter)
+logger.addHandler(stderr)
+logger.setLevel(logging.INFO)
+
 
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
@@ -84,7 +95,6 @@ def compute_score_from_splits(counts, splits, scorer_factory):
     sum_scores = 0
     for start, stop in zip(splits, splits[1:]):
         sum_scores += scorer(start, stop)
-        print start, stop, scorer(start, stop)
     sum_scores+=scorer(start = splits[-1])
     return sum_scores
 
@@ -113,7 +123,6 @@ def split_into_segments_square(counts, score_computer_factory,
                                regularisation_multiplyer=0,
                                regularisation_function=None,
                                split_candidates=None):
-    print counts,
     if regularisation_function is None:
         regularisation_function = lambda x: x
     if split_candidates is None:
@@ -141,7 +150,6 @@ def split_into_segments_square(counts, score_computer_factory,
         if right_borders[i] != 0:
             num_splits[i]= num_splits[right_borders[i]] + 1
         split_scores[i] = score_if_split_at_[right_borders[i]]
-    print split_scores[-1]
     return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
 
 def split_into_segments_slidingwindow(
@@ -151,12 +159,13 @@ def split_into_segments_slidingwindow(
         regularisation_function=None):
     split_points = set([0])
     for start in range(0, len(counts), window_shift):
+        logger.info('Processing window at start:%d' % (start))
         stop = min(start+window_size, len(counts))
         segment_score, segment_split_points = split_into_segments_square(
             counts[start:stop], score_computer_factory,
             regularisation_multiplyer,
             regularisation_function=None)
-        split_points.update(segment_split_points)
+        split_points.update([start+s for s in segment_split_points])
     return split_into_segments_square(
             counts, score_computer_factory,
             regularisation_multiplyer,
@@ -164,7 +173,8 @@ def split_into_segments_slidingwindow(
             split_candidates=sorted(split_points))
 
 def parse_bedgrah(filename):
-    chromosomes = {}
+    chromosome_data = None
+    previous_chrom = None
     with open(filename) as bedgrpah_file:
         for line in bedgrpah_file:
             if line.strip() == '':
@@ -173,15 +183,61 @@ def parse_bedgrah(filename):
             start = int(start)
             stop = int(stop)
             coverage = int(coverage)
-            if chrom not in chromosomes:
-                chromosomes[chrom] = array.array('l')
-            chromosomes[chrom].extend([coverage]*(stop-start))
-    for chrom in chromosomes:
-        chromosomes[chrom] = np.array(chromosomes[chrom])
-    return chromosomes
+            if chrom != previous_chrom:
+                if previous_chrom is not None:
+                    yield previous_chrom, np.array(chromosome_data)
+                chromosome_data = array.array('l')
+            chromosome_data.extend([coverage]*(stop-start))
+            previous_chrom = chrom
+        yield chrom, np.array(chromosome_data)
+
+def split_bedgraph(in_filename, out_filename, scorer_factory,
+                   regularisation_multiplyer, split_function):
+    with open(out_filename, 'w') as outfile:
+        logger.info('Reading input file %s' % (in_filename))
+        for chrom, counts in parse_bedgrah(in_filename):
+            logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
+            score, splits = split_function(counts, scorer_factory, regularisation_multiplyer)
+            logger.info('chrom %s finished, score %f' % (chrom, score))
+            scorer = scorer_factory(counts, splits+[len(counts)])
+            logger.info('Starting output of chrom %s' % (chrom))
+            for i, (start, stop) in enumerate(zip(splits, splits[1:])):
+                outfile.write('%s\t%d\t%d\t%f\n' % (chrom, start, stop, scorer(i, i+1)))
+            outfile.write('%s\t%d\t%d\t%f\n' % (chrom, splits[-1], len(counts), scorer(len(splits)-1)))
+
 
 if __name__ == '__main__':
+    argparser = argparse.ArgumentParser("Pasio")
+    argparser.add_argument('--algorithm', choices=['slidingwindow', 'exact'],
+                           help="Algorithm to use")
+    argparser.add_argument('--bedgraph', required=True, help="Input bedgraph path")
+    argparser.add_argument('-o', '--out_bedgraph', help="Output begraph path")
+    argparser.add_argument('--alpha', type=int, required=True,
+                           help="alpha parameter of gamma distribution")
+    argparser.add_argument('--beta', type=float, required=True,
+                           help="beta parameter of gamma distribution")
+    argparser.add_argument('--regularisation', type=float, default=0, help="Penalty for each split")
+    argparser.add_argument('--window_size', type=int, help="Size of window fo split with exact algorithm")
+    argparser.add_argument('--window_shift', type=int, help = "Shift in one step")
+
+    args = argparser.parse_args()
+    print args
     scorer_factory = lambda counts, split_candidates=None: LogMarginalLikelyhoodComputer(
-        counts, 1, 1, split_candidates = split_candidates)
-    points = split_into_segments_square(counts, scorer_factory)
-    print points
+        counts, args.alpha, args.beta, split_candidates = split_candidates)
+
+    if args.algorithm == 'slidingwindow':
+        split_function = lambda counts, factory, regularisation: split_into_segments_slidingwindow(
+            counts, factory,
+            window_size=args.window_size, window_shift=args.window_shift,
+            regularisation_multiplyer=regularisation,
+            regularisation_function=None)
+    elif args.algorithm=='exact':
+        split_function = lambda counts, factory, regularisation: split_into_segments_square(
+            counts, factory,
+            regularisation_multiplyer=regularisation,
+            regularisation_function=None)
+
+    logger.info('Starting')
+    split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory,
+                   args.regularisation, split_function)
+
