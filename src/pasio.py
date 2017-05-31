@@ -159,7 +159,7 @@ def split_into_segments_slidingwindow(
         regularisation_function=None):
     split_points = set([0])
     for start in range(0, len(counts), window_shift):
-        logger.info('Processing window at start:%d' % (start))
+        logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
         stop = min(start+window_size, len(counts))
         segment_score, segment_split_points = split_into_segments_square(
             counts[start:stop], score_computer_factory,
