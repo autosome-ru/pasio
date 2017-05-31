@@ -187,23 +187,24 @@ def parse_bedgrah(filename):
                 if previous_chrom is not None:
                     yield previous_chrom, np.array(chromosome_data)
                 chromosome_data = array.array('l')
+                chromosome_start = start
             chromosome_data.extend([coverage]*(stop-start))
             previous_chrom = chrom
-        yield chrom, np.array(chromosome_data)
+        yield chrom, np.array(chromosome_data), chromosome_start
 
 def split_bedgraph(in_filename, out_filename, scorer_factory,
                    regularisation_multiplyer, split_function):
     with open(out_filename, 'w') as outfile:
         logger.info('Reading input file %s' % (in_filename))
-        for chrom, counts in parse_bedgrah(in_filename):
+        for chrom, counts, chrom_start in parse_bedgrah(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
             score, splits = split_function(counts, scorer_factory, regularisation_multiplyer)
             logger.info('chrom %s finished, score %f' % (chrom, score))
             scorer = scorer_factory(counts, splits+[len(counts)])
             logger.info('Starting output of chrom %s' % (chrom))
             for i, (start, stop) in enumerate(zip(splits, splits[1:])):
-                outfile.write('%s\t%d\t%d\t%d\t%f\t%f\n' % (chrom, start, stop, stop-start, counts[start:stop].mean(), scorer(i, i+1)))
-            outfile.write('%s\t%d\t%d\t%d\t%f\t%f\n' % (chrom, splits[-1], len(counts), len(counts)-splits[-1], counts[splits[-1]:].mean(), scorer(len(splits)-1)))
+                outfile.write('%s\t%d\t%d\t%d\t%f\t%f\n' % (chrom, start+chrom_start, stop+chrom_start, stop-start, counts[start:stop].mean(), scorer(i, i+1)))
+            outfile.write('%s\t%d\t%d\t%d\t%f\t%f\n' % (chrom, splits[-1]+chrom_start, len(counts)+chrom_start, len(counts)-splits[-1], counts[splits[-1]:].mean(), scorer(len(splits)-1)))
 
 
 if __name__ == '__main__':
