@@ -190,7 +190,7 @@ def test_collect_split_points():
     assert pasio.collect_split_points([0,0,2,1,4]) == [0,1,4]
     assert pasio.collect_split_points([0,0,2,1,3]) == [0,2,3]
 
-def bedgraph_reader(tmpdir):
+def test_bedgraph_reader(tmpdir):
     bedgraph_file = tmpdir.mkdir("sub").join("test.bedgraph")
     bedgraph_file.write(
         '''chr1 0 10 0
@@ -201,7 +201,7 @@ def bedgraph_reader(tmpdir):
         chr2 15 50 2
         chr2 50 60 0
         ''')
-    chromosomes = pasio.parse_bedgrah(str(bedgraph_file))
+    chromosomes = {k:v for k,v in pasio.parse_bedgrah(str(bedgraph_file))}
     assert len(chromosomes) == 2
     assert len(chromosomes['chr1']) == 50
     assert np.all(chromosomes['chr1'][0:10] == 0)

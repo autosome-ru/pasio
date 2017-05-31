@@ -10,6 +10,9 @@ def compute_log_marginal_likelyhood2(scorer, length):
 def segmentation200(counts, scorer):
     optimal_split = pasio.split_into_segments_square(counts, scorer)
 
+def parse_bedgraph(filename):
+    {k:v for k,v in pasio.parse_bedgrah(filename)}
+
 def test_benchmark_segmentation(benchmark):
     np.random.seed(2)
 
@@ -36,4 +39,4 @@ def test_benchmark_bedgraph_parser(benchmark, tmpdir):
         if random.randint(0,10)==5:
             bedgraph_file.write('chr1 %d %d %d\n' % (previous_i, i, 1000))
 
-    chromosomes = benchmark(pasio.parse_bedgrah, str(bedgraph_file))
+    chromosomes = benchmark(parse_bedgraph, str(bedgraph_file))
