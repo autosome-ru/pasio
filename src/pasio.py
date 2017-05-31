@@ -202,8 +202,8 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
             scorer = scorer_factory(counts, splits+[len(counts)])
             logger.info('Starting output of chrom %s' % (chrom))
             for i, (start, stop) in enumerate(zip(splits, splits[1:])):
-                outfile.write('%s\t%d\t%d\t%f\t%f\n' % (chrom, start, stop, counts[start:stop].mean(), scorer(i, i+1)))
-            outfile.write('%s\t%d\t%d\t%f\t%f\n' % (chrom, splits[-1], len(counts), counts[splits[-1]:].mean(), scorer(len(splits)-1)))
+                outfile.write('%s\t%d\t%d\t%d\t%f\t%f\n' % (chrom, start, stop, stop-start, counts[start:stop].mean(), scorer(i, i+1)))
+            outfile.write('%s\t%d\t%d\t%d\t%f\t%f\n' % (chrom, splits[-1], len(counts), len(counts)-splits[-1], counts[splits[-1]:].mean(), scorer(len(splits)-1)))
 
 
 if __name__ == '__main__':
