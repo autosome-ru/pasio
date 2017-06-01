@@ -11,7 +11,7 @@ def segmentation200(counts, scorer):
     optimal_split = pasio.split_into_segments_square(counts, scorer)
 
 def parse_bedgraph(filename):
-    {k:v for k,v in pasio.parse_bedgrah(filename)}
+    {k:v for (k,v,_) in pasio.parse_bedgrah(filename)}
 
 def test_benchmark_segmentation(benchmark):
     np.random.seed(2)

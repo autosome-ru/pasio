@@ -185,7 +185,7 @@ def parse_bedgrah(filename):
             coverage = int(coverage)
             if chrom != previous_chrom:
                 if previous_chrom is not None:
-                    yield previous_chrom, np.array(chromosome_data)
+                    yield previous_chrom, np.array(chromosome_data), chromosome_start
                 chromosome_data = array.array('l')
                 chromosome_start = start
             chromosome_data.extend([coverage]*(stop-start))
