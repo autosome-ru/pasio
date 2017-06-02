@@ -76,20 +76,9 @@ class LogMarginalLikelyhoodComputer:
         return add1-sub1-sub2
 
     def all_suffixes_score(self, stop):
-        #suffixes_score = np.zeros(stop, dtype='float64')
+        self.counts_cumsum_[:stop] = self.cumsum[stop]-self.cumsum[0:stop]
 
-        #counts_cumsum = np.zeros(stop)
-        #counts_cumsum += self.cumsum[stop]-self.cumsum[0:stop]
-
-        self.counts_cumsum_[:stop] = 0
-        self.counts_cumsum_[:stop] += self.cumsum[stop]-self.cumsum[0:stop]
-
-        #logfac_counts_cumsum = np.zeros(stop)
-        #logfac_counts_cumsum += (self.logfac_cumsum[stop]-
-        #                             self.logfac_cumsum[0:stop])
-
-        self.logfac_counts_cumsum_[:stop] = 0
-        self.logfac_counts_cumsum_[:stop] += (self.logfac_cumsum[stop]-
+        self.logfac_counts_cumsum_[:stop] = (self.logfac_cumsum[stop]-
                                      self.logfac_cumsum[0:stop])
 
         self.add1_vec_[:stop] = log_factorial(self.counts_cumsum_[:stop]+self.alpha)
@@ -147,9 +136,9 @@ def split_into_segments_square(counts, score_computer_factory,
 
     score_computer = score_computer_factory(counts,
                                             split_candidates=split_candidates)
-    split_scores = np.zeros((len(split_candidates),))
-    right_borders = np.zeros((len(split_candidates),), dtype=int)
-    num_splits = np.zeros((len(split_candidates),))
+    split_scores = np.zeros(len(split_candidates))
+    right_borders = np.zeros(len(split_candidates), dtype=int)
+    num_splits = np.zeros(len(split_candidates))
     split_scores[0] = 0
     split_scores[1] = score_computer(0, 1)
     for i, split in enumerate(split_candidates[1:], 1):
