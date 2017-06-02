@@ -166,6 +166,7 @@ def split_into_segments_slidingwindow(
             regularisation_multiplyer,
             regularisation_function=None)
         split_points.update([start+s for s in segment_split_points])
+    logger.info('Final split of chromosome with %d split points' % (len(split_points)))
     return split_into_segments_square(
             counts, score_computer_factory,
             regularisation_multiplyer,
@@ -198,13 +199,24 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgrah(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
-            score, splits = split_function(counts, scorer_factory, regularisation_multiplyer)
+            score, splits = split_function(counts, scorer_factory,
+                                           regularisation_multiplyer)
             logger.info('chrom %s finished, score %f' % (chrom, score))
             scorer = scorer_factory(counts, splits+[len(counts)])
             logger.info('Starting output of chrom %s' % (chrom))
             for i, (start, stop) in enumerate(zip(splits, splits[1:])):
-                outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom, start+chrom_start, stop+chrom_start, counts[start:stop].mean(), stop-start, scorer(i, i+1)))
-            outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom, splits[-1]+chrom_start, len(counts)+chrom_start, len(counts)-splits[-1], counts[splits[-1]:].mean(), scorer(len(splits)-1)))
+                outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
+                                                            start+chrom_start,
+                                                            stop+chrom_start,
+                                                            counts[start:stop].mean(),
+                                                            stop-start,
+                                                            scorer(i, i+1)))
+            outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
+                                                        splits[-1]+chrom_start,
+                                                        len(counts)+chrom_start,
+                                                        counts[splits[-1]:].mean(),
+                                                        len(counts)-splits[-1],
+                                                        scorer(len(splits)-1)))
 
 
 if __name__ == '__main__':
