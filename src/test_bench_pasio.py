@@ -7,7 +7,7 @@ import random
 def compute_log_marginal_likelyhood2(scorer, length):
     scorer(0, length)
 
-def segmentation200(counts, scorer):
+def segmentation(counts, scorer):
     optimal_split = pasio.split_into_segments_square(counts, scorer)
 
 def parse_bedgraph(filename):
@@ -21,7 +21,17 @@ def test_benchmark_segmentation(benchmark):
 
     scorer_factory = lambda counts, split_candidates=None : pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1, split_candidates)
-    result = benchmark(segmentation200, counts, scorer_factory)
+    result = benchmark(segmentation, counts, scorer_factory)
+
+def test_benchmark_segmentation_long(benchmark):
+    np.random.seed(2)
+
+    counts = np.concatenate([np.random.poisson(15, 500),
+                             np.random.poisson(20, 500)])
+
+    scorer_factory = lambda counts, split_candidates=None : pasio.LogMarginalLikelyhoodComputer(
+        counts, 1, 1, split_candidates)
+    result = benchmark(segmentation, counts, scorer_factory)
 
 def test_benchmark_log_marginal_likehood(benchmark):
     counts = np.concatenate([np.random.poisson(200, 50),
