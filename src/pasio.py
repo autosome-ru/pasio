@@ -152,6 +152,19 @@ def split_into_segments_square(counts, score_computer_factory,
         split_scores[i] = score_if_split_at_[right_borders[i]]
     return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
 
+def split_into_segments_if_not_all_zero(counts, score_computer_factory,
+                                        regularisation_multiplyer=0,
+                                        regularisation_function=None,
+                                        split_candidates=None):
+    if np.all(counts == 0):
+        logger.info('Window contains just zeros. Skipping.')
+        scorer = score_computer_factory(counts, split_candidates)
+        return scorer(), [0, len(counts)]
+    return split_into_segments_square(counts, score_computer_factory,
+                                      regularisation_multiplyer=0,
+                                      regularisation_function=None,
+                                      split_candidates=None)
+
 def split_into_segments_slidingwindow(
         counts, score_computer_factory,
         window_size, window_shift,
@@ -161,7 +174,7 @@ def split_into_segments_slidingwindow(
     for start in range(0, len(counts), window_shift):
         logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
         stop = min(start+window_size, len(counts))
-        segment_score, segment_split_points = split_into_segments_square(
+        segment_score, segment_split_points = split_into_segments_if_not_all_zero(
             counts[start:stop], score_computer_factory,
             regularisation_multiplyer,
             regularisation_function=None)
@@ -172,6 +185,7 @@ def split_into_segments_slidingwindow(
             regularisation_multiplyer,
             regularisation_function,
             split_candidates=sorted(split_points))
+
 
 def parse_bedgrah(filename):
     chromosome_data = None
@@ -192,6 +206,7 @@ def parse_bedgrah(filename):
             chromosome_data.extend([coverage]*(stop-start))
             previous_chrom = chrom
         yield chrom, np.array(chromosome_data), chromosome_start
+
 
 def split_bedgraph(in_filename, out_filename, scorer_factory,
                    regularisation_multiplyer, split_function):
