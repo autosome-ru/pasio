@@ -317,7 +317,7 @@ if __name__ == '__main__':
             regularisation_function=None,
             num_rounds=args.num_rounds)
 
-    logger.info('Starting')
+    logger.info('Starting Pasio wis args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory,
                    args.regularisation, split_function)
 
