@@ -49,11 +49,11 @@ class LogMarginalLikelyhoodComputer:
         self.logfac_cumsum = np.hstack([0, np.cumsum(log_factorial(counts))])[self.split_candidates]
 
         # buffers
-        self.suffixes_score_ = np.zeros(len(counts)+1, dtype='float64')
-        self.counts_cumsum_ = np.zeros(len(counts)+1, dtype='int')
-        self.logfac_counts_cumsum_ = np.zeros(len(counts)+1, dtype='float64')
-        self.add1_vec_ = np.zeros(len(counts)+1, dtype='float64')
-        self.sub2_vec_ = np.zeros(len(counts)+1, dtype='float64')
+        self.suffixes_score_ = np.zeros(len(self.split_candidates), dtype='float64')
+        self.counts_cumsum_ = np.zeros(len(self.split_candidates), dtype='int')
+        self.logfac_counts_cumsum_ = np.zeros(len(self.split_candidates), dtype='float64')
+        self.add1_vec_ = np.zeros(len(self.split_candidates), dtype='float64')
+        self.sub2_vec_ = np.zeros(len(self.split_candidates), dtype='float64')
 
     def __call__(self, start=None, stop=None):
         if start is None:
