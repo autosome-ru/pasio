@@ -15,14 +15,19 @@ logger.setLevel(logging.INFO)
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
         return (x+1./2)*np.log(x) - x + (1./2)*np.log(2*np.pi) + 1./(12*x)
-    def __init__(self):
-        self.precomputed = np.zeros(4096)
-        for i in range(4096):
+
+    def __init__(self, cache_size = 1048576):
+        self.cache_size = cache_size
+        self.precomputed = np.zeros(self.cache_size)
+        for i in range(min(4096, self.cache_size)):
             self.precomputed[i] = np.log(np.arange(1, i+1)).sum()
+        for i in range(min(4096, self.cache_size), self.cache_size):
+            self.precomputed[i] = self.approximate_log_factorial(i)
+
     def __call__(self, x):
         if type(x) is np.ndarray:
             log_factorial = np.zeros(x.shape)
-            is_small = x < 4096
+            is_small = x < self.cache_size
             log_factorial[is_small] = self.precomputed[x[is_small]]
             log_factorial[~is_small] = self.approximate_log_factorial(x[~is_small])
             return log_factorial
@@ -48,6 +53,8 @@ class LogMarginalLikelyhoodComputer:
         self.cumsum = np.hstack([0, np.cumsum(counts)])[self.split_candidates]
         self.logfac_cumsum = np.hstack([0, np.cumsum(log_factorial(counts))])[self.split_candidates]
 
+        self.constant = alpha*np.log(beta)-log_factorial(alpha-1)
+
         # buffers
         self.suffixes_score_ = np.zeros(len(self.split_candidates), dtype='float64')
         self.counts_cumsum_ = np.zeros(len(self.split_candidates), dtype='int')
@@ -70,10 +77,10 @@ class LogMarginalLikelyhoodComputer:
         else:
             sum_counts = self.cumsum[stop]-self.cumsum[start]
             sum_log_fac = self.logfac_cumsum[stop]-self.logfac_cumsum[start]
-        add1 = log_factorial(sum_counts+self.alpha)
+        add1 = log_factorial(sum_counts+self.alpha-1)
         sub1 = sum_log_fac
-        sub2 = (sum_counts+self.alpha+1)*np.log(num_counts+self.beta)
-        return add1-sub1-sub2
+        sub2 = (sum_counts+self.alpha)*np.log(num_counts+self.beta)
+        return add1-sub1-sub2+self.constant
 
     def all_suffixes_score(self, stop):
         self.counts_cumsum_[:stop] = self.cumsum[stop]-self.cumsum[0:stop]
@@ -81,14 +88,14 @@ class LogMarginalLikelyhoodComputer:
         self.logfac_counts_cumsum_[:stop] = (self.logfac_cumsum[stop]-
                                      self.logfac_cumsum[0:stop])
 
-        self.add1_vec_[:stop] = log_factorial(self.counts_cumsum_[:stop]+self.alpha)
+        self.add1_vec_[:stop] = log_factorial(self.counts_cumsum_[:stop]+self.alpha-1)
 
-        self.sub2_vec_[:stop] = (self.counts_cumsum_[:stop]+self.alpha+1)*np.log(
+        self.sub2_vec_[:stop] = (self.counts_cumsum_[:stop]+self.alpha)*np.log(
             self.split_candidates[stop]-self.split_candidates[:stop]+self.beta)
 
         self.suffixes_score_[:stop] = self.add1_vec_[:stop] - self.logfac_counts_cumsum_[:stop] - self.sub2_vec_[:stop]
 
-        return self.suffixes_score_[:stop]
+        return self.suffixes_score_[:stop]+self.constant
 
 def compute_score_from_splits(counts, splits, scorer_factory):
     scorer = scorer_factory(counts)

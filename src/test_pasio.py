@@ -3,6 +3,7 @@ import pasio
 import numpy as np
 import random
 import tempfile
+import math
 
 
 def test_stat_split_into_segments_square():
@@ -25,6 +26,27 @@ def test_stat_split_into_segments_square():
             assert optimal_split[1] == [0,200]
         else:
             assert abs(two_split[1]-100) < 10
+
+def test_log_marginal_likelyhood_exact():
+    def exact_function(counts, alpha, beta):
+        counts_facproduct = np.prod(np.array(map(np.math.factorial, counts)))
+        return np.log(
+            (beta**alpha*math.gamma(sum(counts)+alpha)) / (
+                math.gamma(alpha)*counts_facproduct*((len(counts)+beta)**(sum(counts)+alpha))
+                )
+        )
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0]), 3, 5, None)
+    assert np.allclose(scorer(), exact_function(np.array([0]), 3, 5))
+
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0, 1]), 3, 5, None)
+    assert np.allclose(scorer(), exact_function(np.array([0, 1]), 3, 5))
+
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 5, 2, None)
+    assert np.allclose(scorer(), exact_function(np.array([4, 0, 1, 3]), 5, 2))
+
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 1, 1, None)
+    assert np.allclose(scorer(), exact_function(np.array([4, 0, 1, 3]), 1, 1))
+
 
 class SimpleScorer:
     def __init__(self, sequence, split_candidates=None):
