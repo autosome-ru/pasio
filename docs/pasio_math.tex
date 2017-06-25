@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+\newtheorem{hyp}{Hypothesis} 
+\begin{document}
+% The problem we are attempting to solve by pasio s the following: We see that comparing 
+
+Let's say DNAse-accecebility data on a genome, or a chromosome is a vector $V$ of counts $c_1, \dots c_n$
+where $c_i$ is a coverage of $i$-th nucleotide by 5' ends of reads.
+\begin{hyp}
+    \label{hyp:main}
+Each time we perform a DNAse-acc experiment we get a vector $V$ that can be constructed in the following way:
+Split $V$ into a non-intersecting segments $s_1, \cdots s_k$. In each segment $s_i$ all the counts $c$ come from a Poisson distribution
+    $P(\lambda_i)$. A parameter $\lambda_i$ is different for each segment.
+    
+    Given a segment $s$ unbiased estimate for $\lambda$ is mean of all counts in $s$.
+\end{hyp}
+One can see that hypothesis \ref{hyp:main} is true. One can just say that each segment consist of one nucleotide
+and $\lambda$ is equal to the coverage of this nucleotide. 
+
+What will interest us is other possible segmentations that suit hypothesis \ref{hyp:main}.
+
+Likelyhood of drawing $k$ from Poisson distribution $P(\lambda)$ is equal to 
+$$
+L(k, \lambda) = \frac {\lambda^k} {k!} e^{-\lambda}
+$$.
+
+Given a segment $s$ and it's counts $\overline{x}$ one can compute a likelyhood:
+$$
+L(\overline{x}, \lambda) = \prod _{i=0} ^{|\overline{x}|} {L(x_i, \lambda)} = 
+\prod _{i=0} ^{|\overline{x}|} \frac {\lambda^{x_i}} {x_i!} e^{-\lambda} = 
+e^{-|\overline{x}|\lambda} \prod _{i=0} ^{|\overline{x}|} \frac {\lambda^{x_i}} {x_i!}  = 
+\frac {e^{-|\overline{x}|\lambda} \lambda^{\sum _{i=0} ^{|\overline{x}|} x_i}} {\prod _{i=0} ^{|\overline{x}|} x_i!}
+$$
+Then let's call length of a segment $|\overline{x}| = N(s)$ and sum of counts $\sum _{i=0} ^{|\overline{x}|} x_i = C(s)$.
+Likelyhood is then can be written as 
+$$
+L(\overline{x}, \lambda) = \prod _{i=0} ^{|\overline{x}|} {L(x_i, \lambda)} = 
+\frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!}
+$$
+
+For the purpose of segmentation we will use marginal likelyhood
+$$
+    ML(s) = \int _{0} ^{\infty} L(s, \lambda) \rho(\lambda) d\lambda = 
+ \int _{0} ^{\infty} \rho(\lambda) \frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!} d\lambda
+$$
+Here, $\rho(\lambda)$ is a prior -- a distribution on lambdas.
+We search for $\rho(lambda)$ in a form of gamma distribution:
+$$
+ \rho(\lambda) = G(\alpha, \frac 1 \beta) = \frac {\beta^\alpha} {\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\lambda \beta}
+$$
+Now we can write the whole integral
+\begin{align*}
+    ML(s, \alpha, \beta) & = 
+ \int _{0} ^{\infty} \frac {\beta^\alpha} {\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\lambda \beta} \frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!} d\lambda \\
+     & = 
+  \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \int _{0} ^{\infty} \lambda^{\alpha-1} e^{-\lambda \beta} {e^{-N(s)\lambda} \lambda^{C(s)}} d\lambda\\
+     & = 
+    \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \int _{0} ^{\infty} \lambda^{\alpha-1+C(s)}  {e^{-\lambda(N(s)-\beta)} } d\lambda
+\end{align*}
+Then we can use
+$$
+\int _0 ^{\infty}  \lambda^{\alpha-1} e^{-\beta\lambda}d\lambda = \Gamma(\alpha) \beta^{(-\alpha)}
+$$
+And take the integral
+\begin{align*}
+    ML(s, \alpha, \beta) & = 
+    \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \int _{0} ^{\infty} \lambda^{\alpha-1+C(s)}  {e^{-\lambda(N(s)-\beta)} } d\lambda \\
+    & = 
+    \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \frac {\Gamma(C(s)+\alpha)} {(N(s)+\beta)^{C+\alpha}} 
+\end{align*}
+Logarithm of a likelihood is
+\begin{align*}
+    \log (ML(s, \alpha, \beta) = 
+    \log \left( \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \frac {\Gamma(C(s)+\alpha)} {(N(s)+\beta)^{C+\alpha}} \right)\\
+    =
+    \log \left( \beta^\alpha \right) - \log \left( \Gamma(\alpha)) \right) -\log \left( \prod _{i=0} ^{N(s)} x_i! \right) + \log \left( \Gamma(C(s)+\alpha)  \right) -
+    \log \left( (N(s)+\beta)^{C+\alpha}\right)\\
+    =
+    \alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha)) \right) -\sum _{i=0} ^{N(s)} \log \left( x_i! \right) + \log \left( \Gamma(C(s)+\alpha)  \right) -
+    (C+\alpha)\log \left( (N(s)+\beta)\right)\\
+\end{align*}
+
+Now we are analyzing the role of $\alpha$ and $\beta$.
+Let's say we have $K$ segments $s_1, \cdots s_K$. The marginal likelihood for them is a product of marginal likelihood for each:
+\begin{align*}
+    ML(s_1, \cdots s_K, \alpha, \beta) & = \prod _{j=1} ^{K} ML(s_j, \alpha, \beta) \\
+    & = 
+    \prod _{j=1} ^{K} \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s_j)} x_i!} \frac {\Gamma(C(s_j)+\alpha)} {(N(s_j)+\beta)^{C+\alpha}} \\
+    & = 
+    \underbrace {\frac {\left[\beta^{\alpha}\right]^K} {\prod _{j=1} ^{K} \prod _{i=0} ^{N(s_j)} x_i!}}_{\text{Does not depend on segmentation}}
+    \underbrace {\prod _{j=1} ^{K}  \frac {\Gamma(C(s_j)+\alpha)} {\Gamma(\alpha)(N(s_j)+\beta)^{C+\alpha}} }_{\text{Does depend on segmentation}}
+\end{align*}
+
+Now, let's use Stirling's approximation for Gamma function
+$$
+\Gamma(z) = z^z e^{-z} \frac 1 {\sqrt{2\pi z}}
+$$
+\begin{gather*}
+    ML(s_1, \cdots s_K, \alpha, \beta)
+    = 
+    \frac {\left[\beta^{\alpha}\right]^K} {\prod _{j=1} ^{K} \prod _{i=0} ^{N(s_j)} x_i!}
+    \prod _{j=1} ^{K}  
+    \frac {\Gamma(C(s_j)+\alpha)} {\Gamma(\alpha)(N(s_j)+\beta)^{C+\alpha}} \\
+    =
+    \frac {\left[\beta^{\alpha}\right]^K} {\prod _{j=1} ^{K} \prod _{i=0} ^{N(s_j)} x_i!}
+    \prod _{j=1} ^{K} 
+    \frac {(C(s)+\alpha)^{C(s)+\alpha}\frac 1 {\sqrt{2 \pi }}} 
+    {(N(s_j)+\beta)^{(C(s_j)+\alpha)}\frac 1 {\sqrt{2 \pi } }\alpha^\alpha e^{-\alpha}}\\
+    =
+    \frac {\left[\beta^{\alpha}\right]^K} {\prod _{j=1} ^{K} \prod _{i=0} ^{N(s_j)} x_i!}
+    \prod _{j=1} ^{K} 
+    \left( \frac {C(s_j)+\alpha} {N(s_j)+\beta} \right) ^ {C(s_j)+\alpha} e^{-C(s_j)} \sqrt{\frac \alpha {C(s_j)+\alpha}} \frac 1 {\alpha^\alpha}\\
+    =
+    \left[\left(\frac {\beta} {\alpha} \right) ^{\alpha}\right]^K \frac {1} {\prod _{j=1} ^{K} \prod _{i=0} ^{N(s_j)} x_i!}
+    \prod _{j=1} ^{K} 
+    \left( \frac {C(s_j)+\alpha} {N(s_j)+\beta} \right) ^ {C(s_j)+\alpha} e^{-C(s_j)} \sqrt{\frac \alpha {C(s_j)+\alpha}} \\
+    =
+    \underbrace{
+        \left[\left(\frac {\beta} {\alpha} \right) ^{\alpha}\right]^K }_{\text{Penalty for number of segments}} 
+    \underbrace{
+        \frac {e^{-\sum_{j=0} ^K C(s_j)}} {\prod _{j=1} ^{K} \prod _{i=0} ^{N(s_j)} x_i!}}_{\text{Doesn't depend on segmentation}}\\
+    \prod _{j=1} ^{K} 
+    \left(\underbrace { \frac {C(s_j)+\alpha} {N(s_j)+\beta}}_{\text{mean counts estimation}} \right) ^ {C(s_j)+\alpha}  \sqrt{\frac \alpha {C(s_j)+\alpha}} 
+\end{gather*}
+As we can see now, ${\left[\beta^{\alpha}\right]^K}$ is a sort of penalty for large number of splits.
+\end{document}
+
