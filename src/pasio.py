@@ -130,9 +130,15 @@ def collect_split_points(right_borders):
 def split_into_segments_square(counts, score_computer_factory,
                                regularisation_multiplyer=0,
                                regularisation_function=None,
+                               length_regularisation_multiplyer=0,
+                               length_regularisation_function=None,
                                split_candidates=None):
     if regularisation_function is None:
         regularisation_function = lambda x: x
+
+    if length_regularisation_function is None:
+        length_regularisation_function = lambda x: x
+
     if split_candidates is None:
         split_candidates = np.arange(len(counts)+1)
     else:
@@ -147,17 +153,31 @@ def split_into_segments_square(counts, score_computer_factory,
     split_scores = np.zeros(len(split_candidates))
     right_borders = np.zeros(len(split_candidates), dtype=int)
     num_splits = np.zeros(len(split_candidates))
+    splits_length_regularization = np.zeros(len(split_candidates))
     split_scores[0] = 0
     split_scores[1] = score_computer(0, 1)
     for i, split in enumerate(split_candidates[1:], 1):
         score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
         score_if_split_at_ += split_scores[:i]
+
         score_if_split_at_[:] -= regularisation_multiplyer*(regularisation_function(num_splits[:i]+1))
         score_if_split_at_[0] += regularisation_multiplyer*regularisation_function(1)
+
+        last_segment_length_regularization = length_regularisation_function(np.arange(i)[::-1]+1)
+        print last_segment_length_regularization
+        print splits_length_regularization[:i]
+        score_if_split_at_[:] -= length_regularisation_multiplyer*(
+            splits_length_regularization[:i]+last_segment_length_regularization)
+        score_if_split_at_[0] += length_regularisation_multiplyer*length_regularisation_function(1)
         right_borders[i] = np.argmax(score_if_split_at_)
         if right_borders[i] != 0:
-            num_splits[i]= num_splits[right_borders[i]] + 1
+            num_splits[i] = num_splits[right_borders[i]] + 1
+        splits_length_regularization[i] = (splits_length_regularization[right_borders[i]]
+                                           +last_segment_length_regularization[right_borders[i]])
         split_scores[i] = score_if_split_at_[right_borders[i]]
+    print length_regularisation_multiplyer*splits_length_regularization
+    print num_splits
+    print split_scores
     return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
 
 def split_into_segments_if_not_all_zero(counts, score_computer_factory,
