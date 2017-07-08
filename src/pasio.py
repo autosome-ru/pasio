@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 import array
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 stderr = logging.StreamHandler()
@@ -288,6 +289,7 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser("Pasio")
     argparser.add_argument('--algorithm', choices=['slidingwindow', 'exact', 'rounds'],
+                           required=True,
                            help="Algorithm to use")
     argparser.add_argument('--bedgraph', required=True, help="Input bedgraph path")
     argparser.add_argument('-o', '--out_bedgraph', help="Output begraph path")
@@ -302,6 +304,11 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
     print args
+    if args.algorithm in ['slidingwindow', 'rounds']:
+        if args.window_shift is None:
+            sys.exit('Argument --window_shift is required for algorithms slidingwingow and rounds')
+        if args.window_size is None:
+            sys.exit('Argument --window_size is required for algorithms slidingwingow and rounds')
     scorer_factory = lambda counts, split_candidates=None: LogMarginalLikelyhoodComputer(
         counts, args.alpha, args.beta, split_candidates = split_candidates)
 
