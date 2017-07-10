@@ -153,13 +153,14 @@ def test_split_with_length_regularisation():
     # score of split 'AAA|B|AA' = 9+1+4 = 14
     # with regularisation = 9+1+4 - 1.5*(1/log(3+1)+1/log(1+1)+1/log(2+1)) = 9.38
     # alternative split: 'AAA|BAA' gives score = 9+3 - 1.5*(1/log(3+1)+1/log(3+1)) = 9.83
-    sequence = 'AAABAACCC'
+    sequence = 'AAABAA'
     optimal_split = pasio.split_into_segments_square(sequence,
                                                      SimpleScorer,
                                                      regularisation_multiplyer = 0,
                                                      length_regularisation_multiplyer = 1.5,
                                                      length_regularisation_function = lambda x:1/np.log(1+x))
-    assert optimal_split[1] == [0,3]
+                                                     #length_regularisation_function = lambda x:x)
+    assert optimal_split[1] == [0, 3]
     assert optimal_split[0] == 9+3 - 1.5*(1/np.log(3+1)+1/np.log(3+1))
 
 
