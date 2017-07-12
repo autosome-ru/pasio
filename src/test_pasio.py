@@ -159,9 +159,20 @@ def test_split_with_length_regularisation():
                                                      regularisation_multiplyer = 0,
                                                      length_regularisation_multiplyer = 1.5,
                                                      length_regularisation_function = lambda x:1/np.log(1+x))
-                                                     #length_regularisation_function = lambda x:x)
+
     assert optimal_split[1] == [0, 3]
     assert optimal_split[0] == 9+3 - 1.5*(1/np.log(3+1)+1/np.log(3+1))
+
+    # limiting possible splits
+
+    optimal_split = pasio.split_into_segments_square(sequence,
+                                                     SimpleScorer,
+                                                     regularisation_multiplyer = 0,
+                                                     split_candidates = np.array([0,4,5]),
+                                                     length_regularisation_multiplyer = 1.5,
+                                                     length_regularisation_function = lambda x:1/np.log(1+x))
+    assert optimal_split[1] == [0, 4]
+    assert optimal_split[0] == 4+4 - 1.5*(1/np.log(4+1)+1/np.log(2+1))
 
 
 def test_approximate_log_factorial():
