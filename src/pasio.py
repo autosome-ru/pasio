@@ -392,7 +392,7 @@ if __name__ == '__main__':
             window_size=args.window_size, window_shift=args.window_shift,
             length_regularization_multiplyer=length_regularization_multiplyer,
             length_regularization_function=length_regularization_function,
-            split_number_regularization_multiplyer=regularization,
+            split_number_regularization_multiplyer=split_number_regularization_multiplyer,
             split_number_regularization_function=None)
     elif args.algorithm=='exact':
         split_function = lambda counts, factory: split_into_segments_square(
