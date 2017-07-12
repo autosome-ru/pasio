@@ -128,13 +128,13 @@ def collect_split_points(right_borders):
     return split_points_collected[::-1]
 
 def split_into_segments_square(counts, score_computer_factory,
-                               regularization_multiplyer=0,
-                               regularization_function=None,
+                               split_number_regularization_multiplyer=0,
+                               split_number_regularization_function=None,
                                length_regularization_multiplyer=0,
                                length_regularization_function=None,
                                split_candidates=None):
-    if regularization_function is None:
-        regularization_function = lambda x: x
+    if split_number_regularization_function is None:
+        split_number_regularization_function = lambda x: x
 
     if length_regularization_function is None:
         length_regularization_function = lambda x: x
@@ -161,9 +161,9 @@ def split_into_segments_square(counts, score_computer_factory,
         score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
         score_if_split_at_ += split_scores[:i]
 
-        score_if_split_at_[:] -= regularization_multiplyer*(
-            regularization_function(num_splits[:i]+1))
-        score_if_split_at_[0] += regularization_multiplyer*regularization_function(1)
+        score_if_split_at_[:] -= split_number_regularization_multiplyer*(
+            split_number_regularization_function(num_splits[:i]+1))
+        score_if_split_at_[0] += split_number_regularization_multiplyer*split_number_regularization_function(1)
 
         last_segment_length_regularization = (length_regularization_multiplyer*
                                               length_regularization_function(
@@ -180,45 +180,59 @@ def split_into_segments_square(counts, score_computer_factory,
     return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
 
 def split_into_segments_if_not_all_zero(counts, score_computer_factory,
-                                        regularization_multiplyer=0,
-                                        regularization_function=None,
+                                        split_number_regularization_multiplyer=0,
+                                        split_number_regularization_function=None,
+                                        length_regularization_multiplyer=0,
+                                        length_regularization_function=None,
                                         split_candidates=None):
     if np.all(counts == 0):
         logger.info('Window contains just zeros. Skipping.')
         scorer = score_computer_factory(counts, split_candidates)
         return scorer(), [0, len(counts)]
     logger.info('Not zeros. Spliting.')
-    return split_into_segments_square(counts, score_computer_factory,
-                                      regularization_multiplyer=regularization_multiplyer,
-                                      regularization_function=regularization_function,
-                                      split_candidates=split_candidates)
+    return split_into_segments_square(
+        counts, score_computer_factory,
+        split_number_regularization_multiplyer=split_number_regularization_multiplyer,
+        split_number_regularization_function=split_number_regularization_function,
+        length_regularization_multiplyer=length_regularization_multiplyer,
+        length_regularization_function=length_regularization_function,
+        split_candidates=split_candidates)
 
 def split_into_segments_slidingwindow(
         counts, score_computer_factory,
         window_size, window_shift,
-        regularization_multiplyer=0,
-        regularization_function=None):
+        split_number_regularization_multiplyer=0,
+        split_number_regularization_function=None,
+        length_regularization_multiplyer=0,
+        length_regularization_function=None):
     split_points = set([0])
     for start in range(0, len(counts), window_shift):
         logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
         stop = min(start+window_size, len(counts))
         segment_score, segment_split_points = split_into_segments_if_not_all_zero(
             counts[start:stop], score_computer_factory,
-            regularization_multiplyer,
-            regularization_function=None)
+            split_number_regularization_multiplyer=split_number_regularization_multiplyer,
+            split_number_regularization_function=split_number_regularization_function,
+            length_regularization_multiplyer=length_regularization_multiplyer,
+            length_regularization_function=length_regularization_function
+        )
         split_points.update([start+s for s in segment_split_points])
     logger.info('Final split of chromosome with %d split points' % (len(split_points)))
     return split_into_segments_square(
             counts, score_computer_factory,
-            regularization_multiplyer,
-            regularization_function,
+            split_number_regularization_multiplyer=split_number_regularization_multiplyer,
+            split_number_regularization_function=split_number_regularization_function,
+            length_regularization_multiplyer=length_regularization_multiplyer,
+            length_regularization_function=length_regularization_function,
             split_candidates=sorted(split_points))
 
 def split_into_segments_rounds(
         counts, score_computer_factory,
         window_size, window_shift,
-        regularization_multiplyer=0,
-        regularization_function=None,
+        split_number_regularization_multiplyer=0,
+        split_number_regularization_function=None,
+        length_regularization_multiplyer=0,
+        length_regularization_function=None,
         num_rounds=None):
     possible_split_points = np.arange(len(counts)+1)
     if num_rounds is None:
@@ -235,8 +249,10 @@ def split_into_segments_rounds(
                 float(start_index)/len(possible_split_points)*100, '%'))
             segment_score, segment_split_points = split_into_segments_if_not_all_zero(
                 counts[start:stop], score_computer_factory,
-                regularization_multiplyer,
-                regularization_function=None,
+                split_number_regularization_multiplyer=split_number_regularization_multiplyer,
+                split_number_regularization_function=split_number_regularization_function,
+                length_regularization_multiplyer=length_regularization_multiplyer,
+                length_regularization_function=length_regularization_function,
                 split_candidates = np.array(
                     [p-start for p in possible_split_points[start_index:stop_index]]
                 )
@@ -280,14 +296,15 @@ def parse_bedgrah(filename):
 
 
 def split_bedgraph(in_filename, out_filename, scorer_factory,
-                   regularization_multiplyer, split_function):
+                   split_function):
     with open(out_filename, 'w') as outfile:
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgrah(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
-            score, splits = split_function(counts, scorer_factory,
-                                           regularization_multiplyer)
-            logger.info('chrom %s finished, score %f, number of splits %d' % (chrom, score, len(splits)))
+            score, splits = split_function(counts, scorer_factory)
+            logger.info('chrom %s finished, score %f, number of splits %d. '
+                        'Log likelyhood: %f.'% (chrom, score, len(splits),
+                        compute_score_from_splits(counts, splits, scorer_factory)))
             scorer = scorer_factory(counts, splits+[len(counts)])
             logger.info('Starting output of chrom %s' % (chrom))
             for i, (start, stop) in enumerate(zip(splits, splits[1:])):
@@ -306,17 +323,22 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
 
 
 if __name__ == '__main__':
-    argparser = argparse.ArgumentParser("Pasio", formatter_class=argparse.RawTextHelpFormatter)
-    argparser.add_argument('--algorithm', choices=['slidingwindow', 'exact', 'rounds'],
+    argparser = argparse.ArgumentParser(
+        "Pasio",
+        formatter_class=argparse.RawTextHelpFormatter)
+    argparser.add_argument('--algorithm',
+                           choices=['slidingwindow', 'exact', 'rounds'],
                            required=True,
                            help="Algorithm to use")
-    argparser.add_argument('--bedgraph', required=True, help="Input bedgraph path")
-    argparser.add_argument('-o', '--out_bedgraph', help="Output begraph path")
+    argparser.add_argument('--bedgraph', required=True,
+                           help="Input bedgraph path")
+    argparser.add_argument('-o', '--out_bedgraph', help="Output begraph path",
+                           required=True)
     argparser.add_argument('--alpha', type=int, required=True,
                            help="alpha parameter of gamma distribution")
     argparser.add_argument('--beta', type=float, required=True,
                            help="beta parameter of gamma distribution")
-    argparser.add_argument('--split_regularization', type=float, default=0,
+    argparser.add_argument('--split_number_regularization', type=float, default=0,
                            help="Penalty multiplyer for each split")
     argparser.add_argument('--length_regularization', type=float, default=0,
                            help="Penalty multiplyer for length of each segment")
@@ -325,17 +347,17 @@ if __name__ == '__main__':
                            help='''Penalty function for length of segments.:
                            none: no length regulatization
                            revlog: 1/log(1+l)
-                           neglog: -log(l)
                            ''')
     argparser.add_argument('--window_size', type=int,
                            help="Size of window fo split with exact algorithm")
     argparser.add_argument('--window_shift', type=int,
                            help = "Shift in one step")
     argparser.add_argument('--num_rounds', type=int,
-                           help = "Number of rounds for round algorithm")
+                           help = '''Number of rounds for round algorithm.
+                           If not set, run untill no split points removed''')
 
     args = argparser.parse_args()
-    print args
+    logger.info("Pasio:"+ str(args))
     if args.algorithm in ['slidingwindow', 'rounds']:
         if args.window_shift is None:
             sys.exit('Argument --window_shift is required for algorithms slidingwingow and rounds')
@@ -344,26 +366,51 @@ if __name__ == '__main__':
     scorer_factory = lambda counts, split_candidates=None: LogMarginalLikelyhoodComputer(
         counts, args.alpha, args.beta, split_candidates = split_candidates)
 
+    length_regularization_functions = {
+         'none': lambda x:x
+        ,'revlog': lambda x:1/np.log(x+1)
+    }
+    length_regularization_function = length_regularization_functions[args.length_regularization_function]
+    length_regularization_multiplyer = args.length_regularization
+    split_number_regularization_multiplyer = args.split_number_regularization
+
+    if length_regularization_multiplyer != 0:
+        if args.length_regularization_function == 'none':
+            sys.exit('Argument --length_regularization_function is required '
+                     'for length regularization multiplyer %s' %
+                     args.length_regularization)
+
+    if args.length_regularization_function != 'none':
+        if length_regularization_multiplyer == 0:
+            sys.exit('Argument --length_regularization_multiplyer is required '
+                     'for length legularization function %s' %
+                     args.length_regularization_function)
+
     if args.algorithm == 'slidingwindow':
-        split_function = lambda counts, factory, regularization: split_into_segments_slidingwindow(
+        split_function = lambda counts, factory: split_into_segments_slidingwindow(
             counts, factory,
             window_size=args.window_size, window_shift=args.window_shift,
-            regularization_multiplyer=regularization,
-            regularization_function=None)
+            length_regularization_multiplyer=length_regularization_multiplyer,
+            length_regularization_function=length_regularization_function,
+            split_number_regularization_multiplyer=regularization,
+            split_number_regularization_function=None)
     elif args.algorithm=='exact':
-        split_function = lambda counts, factory, regularization: split_into_segments_square(
+        split_function = lambda counts, factory: split_into_segments_square(
             counts, factory,
-            regularization_multiplyer=regularization,
-            regularization_function=None)
+            length_regularization_multiplyer=length_regularization_multiplyer,
+            length_regularization_function=length_regularization_function,
+            split_number_regularization_multiplyer=split_number_regularization_multiplyer,
+            split_number_regularization_function=None)
     elif args.algorithm=='rounds':
-        split_function = lambda counts, factory, regularization: split_into_segments_rounds(
+        split_function = lambda counts, factory: split_into_segments_rounds(
             counts, factory,
             window_size=args.window_size, window_shift=args.window_shift,
-            regularization_multiplyer=regularization,
-            regularization_function=None,
+            length_regularization_multiplyer=length_regularization_multiplyer,
+            length_regularization_function=length_regularization_function,
+            split_number_regularization_multiplyer=split_number_regularization_multiplyer,
+            split_number_regularization_function=None,
             num_rounds=args.num_rounds)
 
     logger.info('Starting Pasio wis args'+str(args))
-    split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory,
-                   args.regularization, split_function)
+    split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, split_function)
 
