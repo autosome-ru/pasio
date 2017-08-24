@@ -240,7 +240,7 @@ def split_into_segments_rounds(
     for round_ in range(num_rounds):
         new_split_points = set([0])
         logger.info('Starting split round %d, num_candidates %d' % (round_, len(possible_split_points)))
-        for start_index in range(0, len(possible_split_points), window_shift):
+        for start_index in range(0, len(possible_split_points)-1, window_shift):
             stop_index = min(start_index+window_size, len(possible_split_points)-1)
             start = possible_split_points[start_index]
             stop = possible_split_points[stop_index]
