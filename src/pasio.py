@@ -321,8 +321,7 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
                                                         len(counts)-splits[-1],
                                                         scorer(len(splits)-1)))
 
-
-if __name__ == '__main__':
+def get_argparser():
     argparser = argparse.ArgumentParser(
         "Pasio",
         formatter_class=argparse.RawTextHelpFormatter)
@@ -355,7 +354,11 @@ if __name__ == '__main__':
     argparser.add_argument('--num_rounds', type=int,
                            help = '''Number of rounds for round algorithm.
                            If not set, run untill no split points removed''')
+    return argparser
 
+
+if __name__ == '__main__':
+    argparser = get_argparser()
     args = argparser.parse_args()
     logger.info("Pasio:"+ str(args))
     if args.algorithm in ['slidingwindow', 'rounds']:
