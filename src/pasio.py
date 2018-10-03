@@ -20,33 +20,25 @@ logger.addHandler(stderr)
 logger.setLevel(logging.INFO)
 
 
-class LogFactorialComputer:
-    def approximate_log_factorial(self, x):
-        return scipy.special.gammaln(1+x)
-
+class LogGammaComputer:
     def __init__(self, cache_size = 1048576):
         self.cache_size = cache_size
-        self.precomputed = np.zeros(self.cache_size)
-        for i in range(min(4096, self.cache_size)):
-            self.precomputed[i] = np.log(np.arange(1, i+1)).sum()
-        for i in range(min(4096, self.cache_size), self.cache_size):
-            self.precomputed[i] = self.approximate_log_factorial(i)
+        self.precomputed = scipy.special.gammaln(np.arange(self.cache_size))
 
     def __call__(self, x):
         if type(x) is np.ndarray:
-            log_factorial = np.zeros(x.shape)
+            result = np.zeros(x.shape)
             is_small = x < self.cache_size
-            log_factorial[is_small] = self.precomputed[x[is_small]]
-            log_factorial[~is_small] = self.approximate_log_factorial(x[~is_small])
-            return log_factorial
+            result[is_small] = self.precomputed[x[is_small]]
+            result[~is_small] = scipy.special.gammaln(x[~is_small])
+            return result
         else:
             if x < self.cache_size:
                 return self.precomputed[x]
             else:
-                return self.approximate_log_factorial(x)
+                return scipy.special.gammaln(x)
 
-
-log_factorial = LogFactorialComputer()
+log_gamma = LogGammaComputer()
 
 class LogMarginalLikelyhoodComputer:
     def __init__(self, counts, alpha, beta, split_candidates=None):
@@ -59,9 +51,9 @@ class LogMarginalLikelyhoodComputer:
             assert split_candidates[0] == 0
             self.split_candidates = split_candidates
         self.cumsum = np.hstack([0, np.cumsum(counts)])[self.split_candidates]
-        self.logfac_cumsum = np.hstack([0, np.cumsum(log_factorial(counts))])[self.split_candidates]
+        self.logfac_cumsum = np.hstack([0, np.cumsum(log_gamma(counts + 1))])[self.split_candidates]
 
-        self.constant = alpha*np.log(beta)-log_factorial(alpha-1)
+        self.constant = alpha*np.log(beta)-log_gamma(alpha)
 
         # buffers
         self.suffixes_score_ = np.zeros(len(self.split_candidates), dtype='float64')
@@ -85,7 +77,7 @@ class LogMarginalLikelyhoodComputer:
         else:
             sum_counts = self.cumsum[stop]-self.cumsum[start]
             sum_log_fac = self.logfac_cumsum[stop]-self.logfac_cumsum[start]
-        add1 = log_factorial(sum_counts+self.alpha-1)
+        add1 = log_gamma(sum_counts+self.alpha)
         sub1 = sum_log_fac
         sub2 = (sum_counts+self.alpha)*np.log(num_counts+self.beta)
         return add1-sub1-sub2+self.constant
@@ -96,7 +88,7 @@ class LogMarginalLikelyhoodComputer:
         self.logfac_counts_cumsum_[:stop] = (self.logfac_cumsum[stop]-
                                      self.logfac_cumsum[0:stop])
 
-        self.add1_vec_[:stop] = log_factorial(self.counts_cumsum_[:stop]+self.alpha-1)
+        self.add1_vec_[:stop] = log_gamma(self.counts_cumsum_[:stop]+self.alpha)
 
         self.sub2_vec_[:stop] = (self.counts_cumsum_[:stop]+self.alpha)*np.log(
             self.split_candidates[stop]-self.split_candidates[:stop]+self.beta)
