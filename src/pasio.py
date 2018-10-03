@@ -3,6 +3,7 @@ import argparse
 import array
 import logging
 import sys
+import scipy.special
 
 logger = logging.getLogger(__name__)
 stderr = logging.StreamHandler()
@@ -15,7 +16,7 @@ logger.setLevel(logging.INFO)
 
 class LogFactorialComputer:
     def approximate_log_factorial(self, x):
-        return (x+1./2)*np.log(x) - x + (1./2)*np.log(2*np.pi) + 1./(12*x)
+        return scipy.special.gammaln(1+x)
 
     def __init__(self, cache_size = 1048576):
         self.cache_size = cache_size
@@ -33,7 +34,7 @@ class LogFactorialComputer:
             log_factorial[~is_small] = self.approximate_log_factorial(x[~is_small])
             return log_factorial
         else:
-            if x < 4096:
+            if x < self.cache_size:
                 return self.precomputed[x]
             else:
                 return self.approximate_log_factorial(x)
