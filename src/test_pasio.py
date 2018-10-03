@@ -4,7 +4,8 @@ import numpy as np
 import random
 import tempfile
 import math
-
+import functools
+import operator
 
 def test_stat_split_into_segments_square():
     np.random.seed(4)
@@ -29,11 +30,13 @@ def test_stat_split_into_segments_square():
 
 def test_log_marginal_likelyhood_exact():
     def exact_function(counts, alpha, beta):
-        counts_facproduct = np.prod(np.array(map(np.math.factorial, counts)))
+        counts_facproduct = functools.reduce(operator.mul, map(np.math.factorial, counts), 1)
+        cs = sum(counts)
+        ns = len(counts)
         return np.log(
-            (beta**alpha*math.gamma(sum(counts)+alpha)) / (
-                math.gamma(alpha)*counts_facproduct*((len(counts)+beta)**(sum(counts)+alpha))
-                )
+            (beta**alpha) * math.gamma(cs+alpha) / (
+                math.gamma(alpha) * counts_facproduct * ((ns+beta)**(cs+alpha))
+            )
         )
     scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0]), 3, 5, None)
     assert np.allclose(scorer(), exact_function(np.array([0]), 3, 5))
