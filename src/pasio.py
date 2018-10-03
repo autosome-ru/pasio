@@ -209,11 +209,11 @@ class NotZeroSplitter:
 
 
 class SlidingWindowSplitter:
-    def __init__(self, window_size, window_shift, square_splitter, not_zero_splitter):
+    def __init__(self, window_size, window_shift, square_splitter):
         self.window_size = window_size
         self.window_shift = window_shift
         self.square_splitter = square_splitter
-        self.not_zero_splitter = not_zero_splitter
+        self.not_zero_splitter = NotZeroSplitter(square_splitter)
 
     def split(self, counts, score_computer_factory):
         split_points = set([0])
@@ -226,11 +226,11 @@ class SlidingWindowSplitter:
         return self.square_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
 
 class RoundSplitter:
-    def __init__(self, window_size, window_shift, not_zero_splitter, num_rounds=None):
+    def __init__(self, window_size, window_shift, square_splitter, num_rounds=None):
         self.window_size = window_size
         self.window_shift = window_shift
         self.num_rounds = num_rounds
-        self.not_zero_splitter = not_zero_splitter
+        self.not_zero_splitter = NotZeroSplitter(square_splitter)
 
     def split(self, counts, score_computer_factory):
         possible_split_points = np.arange(len(counts)+1)
@@ -392,16 +392,15 @@ if __name__ == '__main__':
         length_regularization_function=length_regularization_function,
         split_number_regularization_multiplier=split_number_regularization_multiplier,
         split_number_regularization_function=None)
-    not_zero_splitter = NotZeroSplitter(square_splitter)
 
     if args.algorithm == 'slidingwindow':
         splitter = SlidingWindowSplitter(window_size=args.window_size, window_shift=args.window_shift,
-                                        square_splitter=square_splitter, not_zero_splitter=not_zero_splitter)
+                                         square_splitter=square_splitter)
     elif args.algorithm == 'exact':
         splitter = square_splitter
     elif args.algorithm == 'rounds':
         splitter = RoundSplitter(window_size=args.window_size, window_shift=args.window_shift,
-                                not_zero_splitter=not_zero_splitter, num_rounds=args.num_rounds)
+                                square_splitter=square_splitter, num_rounds=args.num_rounds)
 
     logger.info('Starting Pasio with args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, splitter)
