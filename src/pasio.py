@@ -55,13 +55,6 @@ class LogMarginalLikelyhoodComputer:
 
         self.constant = alpha*np.log(beta)-log_gamma(alpha)
 
-        # buffers
-        self.suffixes_score_ = np.zeros(len(self.split_candidates), dtype='float64')
-        self.counts_cumsum_ = np.zeros(len(self.split_candidates), dtype='int')
-        self.logfac_counts_cumsum_ = np.zeros(len(self.split_candidates), dtype='float64')
-        self.add1_vec_ = np.zeros(len(self.split_candidates), dtype='float64')
-        self.sub2_vec_ = np.zeros(len(self.split_candidates), dtype='float64')
-
     def __call__(self, start=None, stop=None):
         if start is None:
             start = 0
@@ -82,20 +75,22 @@ class LogMarginalLikelyhoodComputer:
         sub2 = (sum_counts+self.alpha)*np.log(num_counts+self.beta)
         return add1-sub1-sub2+self.constant
 
+    # marginal likelihoods for segments [i, stop] for all i < stop
     def all_suffixes_score(self, stop):
-        self.counts_cumsum_[:stop] = self.cumsum[stop]-self.cumsum[0:stop]
+        # segment_count + alpha
+        shifted_segment_count_vec = (self.alpha + self.cumsum[stop]) - self.cumsum[0:stop]
+        # it's more efficient to add up numbers, then add result to vector
+        #   (alternative is to add numbers to a vector one-by-one)
 
-        self.logfac_counts_cumsum_[:stop] = (self.logfac_cumsum[stop]-
-                                     self.logfac_cumsum[0:stop])
+        # segment_length + beta
+        shifted_segment_length_vec = (self.beta + self.split_candidates[stop]) - self.split_candidates[:stop]
 
-        self.add1_vec_[:stop] = log_gamma(self.counts_cumsum_[:stop]+self.alpha)
+        segment_logfac_count_vec = self.logfac_cumsum[stop] - self.logfac_cumsum[0:stop]
 
-        self.sub2_vec_[:stop] = (self.counts_cumsum_[:stop]+self.alpha)*np.log(
-            self.split_candidates[stop]-self.split_candidates[:stop]+self.beta)
+        add_vec = log_gamma(shifted_segment_count_vec)
+        sub_vec = shifted_segment_count_vec * np.log(shifted_segment_length_vec)
 
-        self.suffixes_score_[:stop] = self.add1_vec_[:stop] - self.logfac_counts_cumsum_[:stop] - self.sub2_vec_[:stop]
-
-        return self.suffixes_score_[:stop]+self.constant
+        return (add_vec - sub_vec - segment_logfac_count_vec) + self.constant
 
 def compute_score_from_splits(counts, splits, scorer_factory):
     scorer = scorer_factory(counts)
