@@ -8,11 +8,11 @@ def compute_log_marginal_likelyhood2(scorer, length):
     scorer(0, length)
 
 def segmentation(counts, scorer, candidates=None):
-    optimal_split = pasio.split_into_segments_square(counts, scorer,
+    optimal_split = pasio.SquareSplitter().split(counts, scorer,
             split_candidates = candidates)
 
 def parse_bedgraph(filename):
-    {k:v for (k,v,_) in pasio.parse_bedgrah(filename)}
+    {k:v for (k,v,_) in pasio.parse_bedgraph(filename)}
 
 def test_benchmark_segmentation(benchmark):
     np.random.seed(2)
