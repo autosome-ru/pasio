@@ -7,17 +7,17 @@
 \begin{document}
 % The problem we are attempting to solve by pasio s the following: We see that comparing 
 
-Let's say DNAse-accecebility data on a genome, or a chromosome is a vector $V$ of counts $c_1, \dots c_n$
+Let's say DNAse-accessibility data on a genome, or a chromosome is a vector $V$ of counts $c_1, \dots c_n$
 where $c_i$ is a coverage of $i$-th nucleotide by 5' ends of reads.
 \begin{hyp}
     \label{hyp:main}
 Each time we perform a DNAse-acc experiment we get a vector $V$ that can be constructed in the following way:
-Split $V$ into a non-intersecting segments $s_1, \cdots s_k$. In each segment $s_i$ all the counts $c$ come from a Poisson distribution
+Split $V$ into non-intersecting segments $s_1, \cdots s_k$. In each segment $s_i$ all the counts $c$ come from a Poisson distribution
     $P(\lambda_i)$. A parameter $\lambda_i$ is different for each segment.
     
     Given a segment $s$ unbiased estimate for $\lambda$ is mean of all counts in $s$.
 \end{hyp}
-One can see that hypothesis \ref{hyp:main} is true. One can just say that each segment consist of one nucleotide
+One can see that hypothesis \ref{hyp:main} is true. One can just say that each segment consists of one nucleotide
 and $\lambda$ is equal to the coverage of this nucleotide. 
 
 What will interest us is other possible segmentations that suit hypothesis \ref{hyp:main}.
@@ -25,7 +25,7 @@ What will interest us is other possible segmentations that suit hypothesis \ref{
 Likelyhood of drawing $k$ from Poisson distribution $P(\lambda)$ is equal to 
 $$
 L(k, \lambda) = \frac {\lambda^k} {k!} e^{-\lambda}
-$$.
+$$
 
 Given a segment $s$ and it's counts $\overline{x}$ one can compute a likelyhood:
 $$
@@ -47,7 +47,7 @@ $$
  \int _{0} ^{\infty} \rho(\lambda) \frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!} d\lambda
 $$
 Here, $\rho(\lambda)$ is a prior -- a distribution on lambdas.
-We search for $\rho(lambda)$ in a form of gamma distribution:
+We search for $\rho(\lambda)$ in a form of gamma distribution:
 $$
  \rho(\lambda) = G(\alpha, \frac 1 \beta) = \frac {\beta^\alpha} {\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\lambda \beta}
 $$
