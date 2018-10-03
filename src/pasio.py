@@ -153,7 +153,7 @@ class SquareSplitter:
         else:
             self.split_number_regularization_function = split_number_regularization_function
 
-    def __call__(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, score_computer_factory, split_candidates=None):
         if split_candidates is None:
             split_candidates = np.arange(len(counts)+1)
         else:
@@ -199,13 +199,13 @@ class NotZeroSplitter:
     def __init__(self, square_splitter):
         self.square_splitter = square_splitter
 
-    def __call__(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, score_computer_factory, split_candidates=None):
         if np.all(counts == 0):
             logger.info('Window contains just zeros. Skipping.')
             scorer = score_computer_factory(counts, split_candidates)
             return scorer(), [0, len(counts)]
         logger.info('Not zeros. Spliting.')
-        return self.square_splitter(counts, score_computer_factory, split_candidates=split_candidates)
+        return self.square_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
 
 
 class SlidingWindowSplitter:
@@ -215,15 +215,15 @@ class SlidingWindowSplitter:
         self.square_splitter = square_splitter
         self.not_zero_splitter = not_zero_splitter
 
-    def __call__(self, counts, score_computer_factory):
+    def split(self, counts, score_computer_factory):
         split_points = set([0])
         for start in range(0, len(counts), self.window_shift):
             logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
             stop = min(start+self.window_size, len(counts))
-            segment_score, segment_split_points = self.not_zero_splitter(counts[start:stop], score_computer_factory)
+            segment_score, segment_split_points = self.not_zero_splitter.split(counts[start:stop], score_computer_factory)
             split_points.update([start+s for s in segment_split_points])
         logger.info('Final split of chromosome with %d split points' % (len(split_points)))
-        return self.square_splitter(counts, score_computer_factory, split_candidates=sorted(split_points))
+        return self.square_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
 
 class RoundSplitter:
     def __init__(self, window_size, window_shift, not_zero_splitter, num_rounds=None):
@@ -232,7 +232,7 @@ class RoundSplitter:
         self.num_rounds = num_rounds
         self.not_zero_splitter = not_zero_splitter
 
-    def __call__(self, counts, score_computer_factory):
+    def split(self, counts, score_computer_factory):
         possible_split_points = np.arange(len(counts)+1)
         if self.num_rounds is None:
             num_rounds = len(counts)
@@ -248,7 +248,7 @@ class RoundSplitter:
                 logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %s of round complete)' % (
                     round_, start, stop, len(possible_split_points[start_index:stop_index]),
                     float(start_index)/len(possible_split_points)*100, '%'))
-                segment_score, segment_split_points = self.not_zero_splitter(
+                segment_score, segment_split_points = self.not_zero_splitter.split(
                     counts[start:stop], score_computer_factory,
                     split_candidates = np.array(
                         [p-start for p in possible_split_points[start_index:stop_index]]
@@ -299,7 +299,7 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
-            score, splits = splitter(counts, scorer_factory)
+            score, splits = splitter.split(counts, scorer_factory)
             logger.info('chrom %s finished, score %f, number of splits %d. '
                         'Log likelyhood: %f.'% (chrom, score, len(splits),
                         compute_score_from_splits(counts, splits, scorer_factory)))
