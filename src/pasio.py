@@ -133,16 +133,8 @@ class SquareSplitter:
                 split_number_regularization_function=lambda x: x):
         self.length_regularization_multiplier = length_regularization_multiplier
         self.split_number_regularization_multiplier = split_number_regularization_multiplier
-
-        if length_regularization_function is None:
-            self.length_regularization_function = lambda x: x
-        else:
-            self.length_regularization_function = length_regularization_function
-
-        if split_number_regularization_function is None:
-            self.split_number_regularization_function = lambda x: x
-        else:
-            self.split_number_regularization_function = split_number_regularization_function
+        self.length_regularization_function = length_regularization_function
+        self.split_number_regularization_function = split_number_regularization_function
 
     def split(self, counts, score_computer_factory, split_candidates=None):
         if split_candidates is None:
@@ -382,7 +374,7 @@ if __name__ == '__main__':
         length_regularization_multiplier=length_regularization_multiplier,
         length_regularization_function=length_regularization_function,
         split_number_regularization_multiplier=split_number_regularization_multiplier,
-        split_number_regularization_function=None)
+        split_number_regularization_function=lambda x:x)
 
     if args.algorithm == 'slidingwindow':
         splitter = SlidingWindowSplitter(window_size=args.window_size, window_shift=args.window_shift,
