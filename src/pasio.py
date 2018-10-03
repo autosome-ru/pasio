@@ -56,24 +56,28 @@ class LogMarginalLikelyhoodComputer:
         self.constant = alpha*np.log(beta)-log_gamma(alpha)
 
     def __call__(self, start=None, stop=None):
+        return self.score(start, stop)
+
+    def score(self, start=None, stop=None):
         if start is None:
             start = 0
         if stop is None:
             stop = len(self.split_candidates)-1
-        num_counts = self.split_candidates[stop]-self.split_candidates[start]
         if stop == 0:
-            sum_counts = 0
-            sum_log_fac = 0
+            segment_count = 0
+            segment_logfac_count = 0
         elif start == 0:
-            sum_counts = self.cumsum[stop]
-            sum_log_fac = self.logfac_cumsum[stop]
+            segment_count = self.cumsum[stop]
+            segment_logfac_count = self.logfac_cumsum[stop]
         else:
-            sum_counts = self.cumsum[stop]-self.cumsum[start]
-            sum_log_fac = self.logfac_cumsum[stop]-self.logfac_cumsum[start]
-        add1 = log_gamma(sum_counts+self.alpha)
-        sub1 = sum_log_fac
-        sub2 = (sum_counts+self.alpha)*np.log(num_counts+self.beta)
-        return add1-sub1-sub2+self.constant
+            segment_count = self.cumsum[stop] - self.cumsum[start]
+            segment_logfac_count = self.logfac_cumsum[stop] - self.logfac_cumsum[start]
+        shifted_segment_count = segment_count + self.alpha
+        segment_length = self.split_candidates[stop] - self.split_candidates[start]
+        shifted_segment_length = segment_length + self.beta
+        add = log_gamma(shifted_segment_count)
+        sub = shifted_segment_count * np.log(shifted_segment_length)
+        return add - sub - segment_logfac_count + self.constant
 
     # marginal likelihoods for segments [i, stop] for all i < stop
     def all_suffixes_score(self, stop):
