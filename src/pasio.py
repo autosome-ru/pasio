@@ -83,6 +83,17 @@ class LogMarginalLikelyhoodComputer:
 
         self.constant = alpha*np.log(beta)-log_gamma(alpha)
 
+    def segment_sum_logfac(self, start=None, stop=None):
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = len(self.split_candidates)-1
+        sum_logfac = self.logfac_cumsum[stop] - self.logfac_cumsum[start]
+        return sum_logfac
+
+    def log_marginal_likelyhood(self, start=None, stop=None):
+        return self.score(start, stop) - self.segment_sum_logfac(start, stop)
+
     def score(self, start=None, stop=None):
         if start is None:
             start = 0
@@ -90,14 +101,16 @@ class LogMarginalLikelyhoodComputer:
             stop = len(self.split_candidates)-1
 
         segment_count = self.cumsum[stop] - self.cumsum[start]
-        segment_logfac_count = self.logfac_cumsum[stop] - self.logfac_cumsum[start]
-
         shifted_segment_count = segment_count + self.alpha
         segment_length = self.split_candidates[stop] - self.split_candidates[start]
         shifted_segment_length = segment_length + self.beta
         add = log_gamma(shifted_segment_count)
         sub = shifted_segment_count * np.log(shifted_segment_length)
-        return add - sub - segment_logfac_count + self.constant
+        return add - sub + self.constant
+
+    def all_suffixes_log_marginal_likelyhoods(self, stop):
+        segment_sum_logfac_vec = self.logfac_cumsum[stop] - self.logfac_cumsum[0:stop]
+        return self.all_suffixes_score(self, stop) - segment_sum_logfac_vec
 
     # marginal likelihoods for segments [i, stop] for all i < stop
     def all_suffixes_score(self, stop):
@@ -109,12 +122,10 @@ class LogMarginalLikelyhoodComputer:
         # segment_length + beta
         shifted_segment_length_vec = (self.beta + self.split_candidates[stop]) - self.split_candidates[:stop]
 
-        segment_logfac_count_vec = self.logfac_cumsum[stop] - self.logfac_cumsum[0:stop]
-
         add_vec = log_gamma(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
         sub_vec = shifted_segment_count_vec * cached_log(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
 
-        return (add_vec - sub_vec - segment_logfac_count_vec) + self.constant
+        return (add_vec - sub_vec) + self.constant
 
 def compute_score_from_splits(counts, splits, scorer_factory):
     scorer = scorer_factory(counts)
@@ -302,8 +313,9 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
             score, splits = splitter.split(counts, scorer_factory)
+            sum_logfac = scorer_factory(counts, split_candidates=splits).segment_sum_logfac()
             logger.info('chrom %s finished, score %f, number of splits %d. '
-                        'Log likelyhood: %f.'% (chrom, score, len(splits),
+                        'Log likelyhood: %f.'% (chrom, score * sum_logfac, len(splits),
                         compute_score_from_splits(counts, splits, scorer_factory)))
             scorer = scorer_factory(counts, splits+[len(counts)])
             logger.info('Starting output of chrom %s' % (chrom))
@@ -313,13 +325,13 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
                                                             stop+chrom_start,
                                                             counts[start:stop].mean(),
                                                             stop-start,
-                                                            scorer.score(i, i+1)))
+                                                            scorer.log_marginal_likelyhood(i, i+1)))
             outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
                                                         splits[-1]+chrom_start,
                                                         len(counts)+chrom_start,
                                                         counts[splits[-1]:].mean(),
                                                         len(counts)-splits[-1],
-                                                        scorer.score(len(splits)-1)))
+                                                        scorer.log_marginal_likelyhood(len(splits)-1)))
 
 def get_argparser():
     argparser = argparse.ArgumentParser(
