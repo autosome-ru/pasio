@@ -186,14 +186,16 @@ class SquareSplitter:
             score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
             score_if_split_at_ += split_scores[:i]
 
-            score_if_split_at_[:] -= self.split_number_regularization_multiplier*(
-                self.split_number_regularization_function(num_splits[:i]+1))
-            score_if_split_at_[0] += self.split_number_regularization_multiplier*self.split_number_regularization_function(1)
+            if self.split_number_regularization_multiplier != 0:
+                score_if_split_at_[:] -= self.split_number_regularization_multiplier*(
+                    self.split_number_regularization_function(num_splits[:i]+1))
+                score_if_split_at_[0] += self.split_number_regularization_multiplier*self.split_number_regularization_function(1)
 
-            last_segment_length_regularization = (self.length_regularization_multiplier*
-                                                  self.length_regularization_function(
-                                                      split - split_candidates[:i]))
-            score_if_split_at_[:] -= last_segment_length_regularization[:i]
+            if self.length_regularization_multiplier != 0:
+                last_segment_length_regularization = (self.length_regularization_multiplier*
+                                                      self.length_regularization_function(
+                                                          split - split_candidates[:i]))
+                score_if_split_at_[:] -= last_segment_length_regularization[:i]
 
             right_borders[i] = np.argmax(score_if_split_at_)
             if right_borders[i] != 0:
