@@ -151,7 +151,6 @@ class SquareSplitter:
         split_scores = np.zeros(len(split_candidates))
         right_borders = np.zeros(len(split_candidates), dtype=int)
         num_splits = np.zeros(len(split_candidates))
-        splits_length_regularization = np.zeros(len(split_candidates))
         split_scores[0] = 0
         split_scores[1] = score_computer(0, 1)
 
@@ -171,8 +170,6 @@ class SquareSplitter:
             right_borders[i] = np.argmax(score_if_split_at_)
             if right_borders[i] != 0:
                 num_splits[i] = num_splits[right_borders[i]] + 1
-            splits_length_regularization[i] = (splits_length_regularization[right_borders[i]]+
-                                               last_segment_length_regularization[right_borders[i]])
             split_scores[i] = score_if_split_at_[right_borders[i]]
 
         return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
