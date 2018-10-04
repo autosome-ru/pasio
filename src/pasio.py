@@ -88,15 +88,10 @@ class LogMarginalLikelyhoodComputer:
             start = 0
         if stop is None:
             stop = len(self.split_candidates)-1
-        if stop == 0:
-            segment_count = 0
-            segment_logfac_count = 0
-        elif start == 0:
-            segment_count = self.cumsum[stop]
-            segment_logfac_count = self.logfac_cumsum[stop]
-        else:
-            segment_count = self.cumsum[stop] - self.cumsum[start]
-            segment_logfac_count = self.logfac_cumsum[stop] - self.logfac_cumsum[start]
+
+        segment_count = self.cumsum[stop] - self.cumsum[start]
+        segment_logfac_count = self.logfac_cumsum[stop] - self.logfac_cumsum[start]
+
         shifted_segment_count = segment_count + self.alpha
         segment_length = self.split_candidates[stop] - self.split_candidates[start]
         shifted_segment_length = segment_length + self.beta
