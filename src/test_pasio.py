@@ -40,16 +40,16 @@ def test_log_marginal_likelyhood_exact():
             )
         )
     scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0]), 3, 5, None)
-    assert np.allclose(scorer(), exact_function(np.array([0]), 3, 5))
+    assert np.allclose(scorer.score(), exact_function(np.array([0]), 3, 5))
 
     scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0, 1]), 3, 5, None)
-    assert np.allclose(scorer(), exact_function(np.array([0, 1]), 3, 5))
+    assert np.allclose(scorer.score(), exact_function(np.array([0, 1]), 3, 5))
 
     scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 5, 2, None)
-    assert np.allclose(scorer(), exact_function(np.array([4, 0, 1, 3]), 5, 2))
+    assert np.allclose(scorer.score(), exact_function(np.array([4, 0, 1, 3]), 5, 2))
 
     scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 1, 1, None)
-    assert np.allclose(scorer(), exact_function(np.array([4, 0, 1, 3]), 1, 1))
+    assert np.allclose(scorer.score(), exact_function(np.array([4, 0, 1, 3]), 1, 1))
 
 
 class SimpleScorer:
@@ -58,7 +58,7 @@ class SimpleScorer:
         if split_candidates is None:
             split_candidates = range(len(self.sequence)+1)
         self.split_candidates = split_candidates
-    def __call__(self, start=0, stop=None):
+    def score(self, start=0, stop=None):
         start = self.split_candidates[start]
         if stop is None:
             stop = self.split_candidates[-1]
@@ -68,7 +68,7 @@ class SimpleScorer:
             return (stop-start)**2
         return stop-start
     def all_suffixes_score(self, stop):
-        return np.array([self(i, stop) for i in range(stop)])
+        return np.array([self.score(i, stop) for i in range(stop)])
 
 simple_scorer_factory = lambda counts, split_candidates=None: SimpleScorer(counts, split_candidates)
 
@@ -197,12 +197,12 @@ def test_suffixes_scores():
                              np.random.poisson(20, 100)])
 
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    suffixes_scores = [scorer(i, 150) for i in range(150)]
+    suffixes_scores = [scorer.score(i, 150) for i in range(150)]
     assert np.allclose(scorer.all_suffixes_score(150), np.array(suffixes_scores))
 
     counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0], dtype='int64')
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    suffixes_scores = [scorer(i, len(counts)-1) for i in range(len(counts)-1)]
+    suffixes_scores = [scorer.score(i, len(counts)-1) for i in range(len(counts)-1)]
     assert np.allclose(scorer.all_suffixes_score(len(counts)-1), np.array(suffixes_scores))
 
 def test_suffixes_scores_with_candidates():
@@ -229,7 +229,7 @@ def test_suffixes_scores_with_candidates():
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
 def compute_log_marginal_likelyhood2(scorer, length):
-    scorer(0, length)
+    scorer.score(0, length)
 
 
 def test_collect_split_points():

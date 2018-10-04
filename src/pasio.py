@@ -83,9 +83,6 @@ class LogMarginalLikelyhoodComputer:
 
         self.constant = alpha*np.log(beta)-log_gamma(alpha)
 
-    def __call__(self, start=None, stop=None):
-        return self.score(start, stop)
-
     def score(self, start=None, stop=None):
         if start is None:
             start = 0
@@ -128,17 +125,17 @@ def compute_score_from_splits(counts, splits, scorer_factory):
     scorer = scorer_factory(counts)
     sum_scores = 0
     for start, stop in zip(splits, splits[1:]):
-        sum_scores += scorer(start, stop)
-    sum_scores+=scorer(start = splits[-1])
+        sum_scores += scorer.score(start, stop)
+    sum_scores += scorer.score(start = splits[-1])
     return sum_scores
 
 def split_on_two_segments_or_not(counts, scorer_factory):
     scorer = scorer_factory(counts)
-    best_score = scorer(0, len(counts))
+    best_score = scorer.score(0, len(counts))
     split_point = 0
     for i in range(len(counts)):
-        current_score = scorer(stop=i)
-        current_score += scorer(start=i)
+        current_score = scorer.score(stop=i)
+        current_score += scorer.score(start=i)
         if current_score > best_score:
             split_point = i
             best_score = current_score
@@ -180,7 +177,7 @@ class SquareSplitter:
         right_borders = np.zeros(len(split_candidates), dtype=int)
         num_splits = np.zeros(len(split_candidates))
         split_scores[0] = 0
-        split_scores[1] = score_computer(0, 1)
+        split_scores[1] = score_computer.score(0, 1)
 
         for i, split in enumerate(split_candidates[1:], 1):
             score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
@@ -213,7 +210,7 @@ class NotZeroSplitter:
         if np.all(counts == 0):
             logger.info('Window contains just zeros. Skipping.')
             scorer = score_computer_factory(counts, split_candidates)
-            return scorer(), [0, len(counts)]
+            return scorer.score(), [0, len(counts)]
         logger.info('Not zeros. Spliting.')
         return self.square_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
 
@@ -321,13 +318,13 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
                                                             stop+chrom_start,
                                                             counts[start:stop].mean(),
                                                             stop-start,
-                                                            scorer(i, i+1)))
+                                                            scorer.score(i, i+1)))
             outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
                                                         splits[-1]+chrom_start,
                                                         len(counts)+chrom_start,
                                                         counts[splits[-1]:].mean(),
                                                         len(counts)-splits[-1],
-                                                        scorer(len(splits)-1)))
+                                                        scorer.score(len(splits)-1)))
 
 def get_argparser():
     argparser = argparse.ArgumentParser(

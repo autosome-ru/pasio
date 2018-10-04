@@ -5,7 +5,7 @@ import random
 
 
 def compute_log_marginal_likelyhood2(scorer, length):
-    scorer(0, length)
+    scorer.score(0, length)
 
 def segmentation(counts, scorer, candidates=None):
     optimal_split = pasio.SquareSplitter().split(counts, scorer,
