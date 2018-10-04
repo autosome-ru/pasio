@@ -19,25 +19,53 @@ stderr.setFormatter(formatter)
 logger.addHandler(stderr)
 logger.setLevel(logging.INFO)
 
+# Works only with non-negative integer values
+class LogComputer:
+    def __init__(self, cache_size = 1048576):
+        self.cache_size = cache_size
+        self.precomputed = np.log(np.arange(self.cache_size))
 
+    # uses fast algorithm if maximal value of x is specified and doesn't exceed cache size
+    def __call__(self, x, max_value = float('inf')):
+        if type(x) is np.ndarray:
+            if max_value <= self.cache_size:
+                return self.precomputed[x]
+            else:
+                result = np.zeros(x.shape)
+                is_small = x < self.cache_size
+                result[is_small] = self.precomputed[x[is_small]]
+                result[~is_small] = np.log(x[~is_small])
+                return result
+        else:
+            if x < self.cache_size:
+                return self.precomputed[x]
+            else:
+                return np.log(x)
+
+# Works only with non-negative integer values
 class LogGammaComputer:
     def __init__(self, cache_size = 1048576):
         self.cache_size = cache_size
         self.precomputed = scipy.special.gammaln(np.arange(self.cache_size))
 
-    def __call__(self, x):
+    # uses fast algorithm if maximal value of x is specified and doesn't exceed cache size
+    def __call__(self, x, max_value = float('inf')):
         if type(x) is np.ndarray:
-            result = np.zeros(x.shape)
-            is_small = x < self.cache_size
-            result[is_small] = self.precomputed[x[is_small]]
-            result[~is_small] = scipy.special.gammaln(x[~is_small])
-            return result
+            if max_value <= self.cache_size:
+                return self.precomputed[x]
+            else:
+                result = np.zeros(x.shape)
+                is_small = x < self.cache_size
+                result[is_small] = self.precomputed[x[is_small]]
+                result[~is_small] = scipy.special.gammaln(x[~is_small])
+                return result
         else:
             if x < self.cache_size:
                 return self.precomputed[x]
             else:
                 return scipy.special.gammaln(x)
 
+cached_log = LogComputer()
 log_gamma = LogGammaComputer()
 
 class LogMarginalLikelyhoodComputer:
@@ -91,8 +119,8 @@ class LogMarginalLikelyhoodComputer:
 
         segment_logfac_count_vec = self.logfac_cumsum[stop] - self.logfac_cumsum[0:stop]
 
-        add_vec = log_gamma(shifted_segment_count_vec)
-        sub_vec = shifted_segment_count_vec * np.log(shifted_segment_length_vec)
+        add_vec = log_gamma(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
+        sub_vec = shifted_segment_count_vec * cached_log(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
 
         return (add_vec - sub_vec - segment_logfac_count_vec) + self.constant
 
@@ -313,7 +341,7 @@ def get_argparser():
                            required=True)
     argparser.add_argument('--alpha', type=int, required=True,
                            help="alpha parameter of gamma distribution")
-    argparser.add_argument('--beta', type=float, required=True,
+    argparser.add_argument('--beta', type=int, required=True,
                            help="beta parameter of gamma distribution")
     argparser.add_argument('--split_number_regularization', type=float, default=0,
                            help="Penalty multiplier for each split")
