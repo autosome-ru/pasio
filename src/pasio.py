@@ -335,7 +335,14 @@ def split_bedgraph(in_filename, out_filename, scorer_factory,
 
 def get_argparser():
     argparser = argparse.ArgumentParser(
-        "Pasio",
+        prog = "Pasio",
+        description = '''
+Example usage, simpliest for practical cases:
+python pasio.py
+      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+      --alpha 5 --beta 1 --algorithm rounds
+      --window_shift 1250 --window_size 2500
+''',
         formatter_class=argparse.RawTextHelpFormatter)
     argparser.add_argument('--algorithm',
                            choices=['slidingwindow', 'exact', 'rounds'],
