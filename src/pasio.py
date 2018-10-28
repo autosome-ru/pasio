@@ -209,8 +209,8 @@ class SquareSplitter:
 
 
 class NotZeroSplitter:
-    def __init__(self, square_splitter):
-        self.square_splitter = square_splitter
+    def __init__(self, base_splitter):
+        self.base_splitter = base_splitter
 
     def split(self, counts, score_computer_factory, split_candidates=None):
         if np.all(counts == 0):
@@ -218,7 +218,7 @@ class NotZeroSplitter:
             scorer = score_computer_factory(counts, split_candidates)
             return scorer.score(), [0, len(counts)]
         logger.info('Not zeros. Spliting.')
-        return self.square_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
 
 
 class SlidingWindowSplitter:
@@ -236,6 +236,7 @@ class SlidingWindowSplitter:
             split_points.update([start+s for s in segment_split_points])
         logger.info('Final split of chromosome with %d split points' % (len(split_points)))
         return self.base_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
+
 
 class RoundSplitter:
     def __init__(self, window_size, window_shift, base_splitter, num_rounds=None):
