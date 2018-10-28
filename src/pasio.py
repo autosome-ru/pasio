@@ -284,8 +284,10 @@ class RoundSplitter:
                                                                                              len(new_split_points)))
         return (final_score, list(new_split_points))
 
-# yields pointwise profiles grouped by chromosome in form (chrom, profile, chromosome_start)
 def parse_bedgraph(filename):
+    '''
+        yields pointwise profiles grouped by chromosome in form (chrom, profile, chromosome_start)
+    '''
     chromosome_data = None
     previous_chrom = None
     with open(filename) as bedgrpah_file:
@@ -306,8 +308,7 @@ def parse_bedgraph(filename):
         yield chrom, np.array(chromosome_data), chromosome_start
 
 
-def split_bedgraph(in_filename, out_filename, scorer_factory,
-                   splitter):
+def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
     with open(out_filename, 'w') as outfile:
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
