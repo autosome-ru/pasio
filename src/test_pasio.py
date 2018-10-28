@@ -8,7 +8,6 @@ import functools
 import operator
 
 def test_stat_split_into_segments_square():
-    tol = 1e-8
     np.random.seed(4)
     scorer_factory = lambda counts, split_candidates=None: pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1, split_candidates)
@@ -20,10 +19,11 @@ def test_stat_split_into_segments_square():
 
         two_split = pasio.split_on_two_segments_or_not(counts, scorer_factory)
 
-        assert optimal_split[0] + tol >= two_split[0]
+        assert optimal_split[0] >= two_split[0]
         assert two_split[1] in optimal_split[1]
-        assert np.abs(optimal_split[0] - pasio.compute_score_from_splits(
-            counts, optimal_split[1], scorer_factory)) < tol
+        assert np.allclose(optimal_split[0],
+                           pasio.compute_score_from_splits(
+                               counts, optimal_split[1], scorer_factory))
         if (two_split[1] is None):
             assert optimal_split[1] == [0,200]
         else:
