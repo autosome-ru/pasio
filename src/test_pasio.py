@@ -269,13 +269,13 @@ def test_split_into_segments_slidingwindow():
     B = 'BBBBBBBBBBBBBBBBB'
     sequence = A+B
     splitter = pasio.SlidingWindowSplitter(window_size=10, window_shift=5,
-                                           square_splitter=pasio.SquareSplitter())
+                                           base_splitter=pasio.SquareSplitter())
     splits = splitter.split(sequence, simple_scorer_factory)
     assert splits[1] == [0, len(A)]
     assert splits[0] == len(A)**2+len(B)**2
 
     splitter = pasio.SlidingWindowSplitter(window_size=10, window_shift=5,
-                                           square_splitter=pasio.SquareSplitter(split_number_regularization_multiplier=2))
+                                           base_splitter=pasio.SquareSplitter(split_number_regularization_multiplier=2))
     splits = splitter.split(sequence, simple_scorer_factory)
     assert splits[1] == [0, len(A)]
     assert splits[0] == len(A)**2+len(B)**2-2

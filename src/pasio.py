@@ -222,28 +222,27 @@ class NotZeroSplitter:
 
 
 class SlidingWindowSplitter:
-    def __init__(self, window_size, window_shift, square_splitter):
+    def __init__(self, window_size, window_shift, base_splitter):
         self.window_size = window_size
         self.window_shift = window_shift
-        self.square_splitter = square_splitter
-        self.not_zero_splitter = NotZeroSplitter(square_splitter)
+        self.base_splitter = base_splitter
 
     def split(self, counts, score_computer_factory):
         split_points = set([0])
         for start in range(0, len(counts), self.window_shift):
             logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
             stop = min(start+self.window_size, len(counts))
-            segment_score, segment_split_points = self.not_zero_splitter.split(counts[start:stop], score_computer_factory)
+            segment_score, segment_split_points = self.base_splitter.split(counts[start:stop], score_computer_factory)
             split_points.update([start+s for s in segment_split_points])
         logger.info('Final split of chromosome with %d split points' % (len(split_points)))
-        return self.square_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
+        return self.base_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
 
 class RoundSplitter:
-    def __init__(self, window_size, window_shift, square_splitter, num_rounds=None):
+    def __init__(self, window_size, window_shift, base_splitter, num_rounds=None):
         self.window_size = window_size
         self.window_shift = window_shift
         self.num_rounds = num_rounds
-        self.not_zero_splitter = NotZeroSplitter(square_splitter)
+        self.base_splitter = base_splitter
 
     def split(self, counts, score_computer_factory):
         possible_split_points = np.arange(len(counts)+1)
@@ -261,7 +260,7 @@ class RoundSplitter:
                 logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %s of round complete)' % (
                     round_, start, stop, len(possible_split_points[start_index:stop_index]),
                     float(start_index)/len(possible_split_points)*100, '%'))
-                segment_score, segment_split_points = self.not_zero_splitter.split(
+                segment_score, segment_split_points = self.base_splitter.split(
                     counts[start:stop], score_computer_factory,
                     split_candidates = np.array(
                         [p-start for p in possible_split_points[start_index:stop_index]]
@@ -416,13 +415,16 @@ if __name__ == '__main__':
         split_number_regularization_function=lambda x:x)
 
     if args.algorithm == 'slidingwindow':
-        splitter = SlidingWindowSplitter(window_size=args.window_size, window_shift=args.window_shift,
-                                         square_splitter=square_splitter)
+        splitter = SlidingWindowSplitter(window_size=args.window_size,
+                                         window_shift=args.window_shift,
+                                         base_splitter=NotZeroSplitter(square_splitter))
     elif args.algorithm == 'exact':
         splitter = square_splitter
     elif args.algorithm == 'rounds':
-        splitter = RoundSplitter(window_size=args.window_size, window_shift=args.window_shift,
-                                square_splitter=square_splitter, num_rounds=args.num_rounds)
+        splitter = RoundSplitter(window_size=args.window_size,
+                                 window_shift=args.window_shift,
+                                 base_splitter=NotZeroSplitter(square_splitter),
+                                 num_rounds=args.num_rounds)
 
     logger.info('Starting Pasio with args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, splitter)
