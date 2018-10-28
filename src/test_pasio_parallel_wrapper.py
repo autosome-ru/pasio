@@ -45,7 +45,7 @@ chr3   13    101    100
         temp_file.close()
         temp_dir = tempfile.mkdtemp()
         sizes = pasio_parallel_wrapper.split_by_chromosomes_and_get_sizes(filename, temp_dir)
-        print sizes
+        print(sizes)
         assert len(sizes) == 3
         assert sizes['chr1']['index'] == 0
         assert sizes['chr1']['label'] == 'chr1'
