@@ -28,7 +28,7 @@ class LogComputer:
     # uses fast algorithm if maximal value of x is specified and doesn't exceed cache size
     def __call__(self, x, max_value = float('inf')):
         if type(x) is np.ndarray:
-            if max_value <= self.cache_size:
+            if max_value < self.cache_size:
                 return self.precomputed[x]
             else:
                 result = np.zeros(x.shape)
