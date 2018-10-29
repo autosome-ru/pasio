@@ -174,8 +174,8 @@ class SquareSplitter:
             if split_candidates[-1] == len(counts):
                 split_candidates = np.array(split_candidates, dtype=int)
             else:
-                split_candidates = np.hstack([np.array(split_candidates, dtype=int),
-                                              len(counts)])
+                split_candidates = np.append(np.array(split_candidates, dtype=int),
+                                             [len(counts)])
 
         score_computer = score_computer_factory(counts,
                                                 split_candidates=split_candidates)
@@ -218,6 +218,26 @@ class NotZeroSplitter:
             scorer = score_computer_factory(counts, split_candidates)
             return scorer.score(), [0, len(counts)]
         logger.info('Not zeros. Spliting.')
+        return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
+
+
+class NotConstantSplitter:
+    def __init__(self, base_splitter):
+        self.base_splitter = base_splitter
+
+    def get_non_constant_split_candidates(self, counts, split_candidates=None):
+        if split_candidates is None:
+            split_candidates = np.insert(np.where(counts[:-1] != counts[1:])[0] + 1, 0, 0)
+        else:
+            if split_candidates[0] == 0:
+                split_candidates = split_candidates[1:]
+            split_candidates = np.insert(
+                                   split_candidates[counts[split_candidates] != counts[split_candidates-1]],
+                                   0, 0)
+        return split_candidates
+
+    def split(self, counts, score_computer_factory, split_candidates=None):
+        split_candidates = self.get_non_constant_split_candidates(counts, split_candidates)
         return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
 
 
@@ -374,6 +394,8 @@ python pasio.py
     argparser.add_argument('--num_rounds', type=int,
                            help = '''Number of rounds for round algorithm.
                            If not set, run until no split points removed''')
+    argparser.add_argument('--no_split_constant', action='store_true',
+                           help = '''[experimental] If set, won't put splits between constant counts''')
     return argparser
 
 
@@ -414,6 +436,9 @@ if __name__ == '__main__':
         length_regularization_function=length_regularization_function,
         split_number_regularization_multiplier=split_number_regularization_multiplier,
         split_number_regularization_function=lambda x:x)
+
+    if args.no_split_constant:
+        square_splitter = NotConstantSplitter(base_splitter = square_splitter)    
 
     if args.algorithm == 'slidingwindow':
         splitter = SlidingWindowSplitter(window_size=args.window_size,

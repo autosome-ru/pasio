@@ -58,6 +58,7 @@ class SimpleScorer:
         if split_candidates is None:
             split_candidates = range(len(self.sequence)+1)
         self.split_candidates = split_candidates
+
     def score(self, start=0, stop=None):
         start = self.split_candidates[start]
         if stop is None:
@@ -67,6 +68,7 @@ class SimpleScorer:
         if len(set(self.sequence[start:stop])) == 1:
             return (stop-start)**2
         return stop-start
+
     def all_suffixes_score(self, stop):
         return np.array([self.score(i, stop) for i in range(stop)])
 
@@ -279,3 +281,49 @@ def test_split_into_segments_slidingwindow():
     splits = splitter.split(sequence, simple_scorer_factory)
     assert splits[1] == [0, len(A)]
     assert splits[0] == len(A)**2+len(B)**2-2
+
+
+class SimpleGreedyScorer:
+    def __init__(self, sequence, split_candidates=None):
+        self.sequence = sequence
+        if split_candidates is None:
+            split_candidates = range(len(self.sequence)+1)
+        self.split_candidates = split_candidates
+
+    def score(self, start=0, stop=None):
+        start = self.split_candidates[start]
+        if stop is None:
+            stop = self.split_candidates[-1]
+        else:
+            stop = self.split_candidates[stop]
+        return (stop-start)**0.5
+
+    def all_suffixes_score(self, stop):
+        return np.array([self.score(i, stop) for i in range(stop)])
+
+simple_greedy_scorer_factory = lambda counts, split_candidates=None: SimpleGreedyScorer(counts, split_candidates)
+
+
+def test_not_constatnt_splitter():
+    sequence = np.array([1,1,1,2,2,2,2])
+    splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
+    splits = splitter.split(sequence, simple_scorer_factory)
+    assert splits[1] == [0, 3]
+
+    splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
+    splits = splitter.split(sequence, simple_greedy_scorer_factory)
+    assert splits[1] == range(len(sequence))
+
+    splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
+    splits = splitter.split(sequence, simple_greedy_scorer_factory)
+    assert splits[1] == [0, 3]
+
+    splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
+    splits = splitter.split(sequence, simple_greedy_scorer_factory, np.array(range(len(sequence)-1)))
+    assert splits[1] == [0, 3]
+
+    splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
+    assert np.allclose(np.array([0, 3]),
+                       splitter.get_non_constant_split_candidates(sequence, None))
+    assert np.allclose(np.array([0, 3]),
+                       splitter.get_non_constant_split_candidates(sequence, np.array([0, 3])))
