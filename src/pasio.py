@@ -135,18 +135,6 @@ def compute_score_from_splits(counts, splits, scorer_factory):
     sum_scores += scorer.score(start = splits[-1])
     return sum_scores
 
-def split_on_two_segments_or_not(counts, scorer_factory):
-    scorer = scorer_factory(counts)
-    best_score = scorer.score(0, len(counts))
-    split_point = 0
-    for i in range(len(counts)):
-        current_score = scorer.score(stop=i)
-        current_score += scorer.score(start=i)
-        if current_score > best_score:
-            split_point = i
-            best_score = current_score
-    return best_score, split_point
-
 def collect_split_points(right_borders):
     split_point = right_borders[-1]
     split_points_collected = [split_point]

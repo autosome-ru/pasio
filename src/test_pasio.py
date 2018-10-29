@@ -7,7 +7,20 @@ import math
 import functools
 import operator
 
+
+
 def test_stat_split_into_segments_square():
+    def split_on_two_segments_or_not(counts, scorer_factory):
+        scorer = scorer_factory(counts)
+        best_score = scorer.score(0, len(counts))
+        split_point = 0
+        for i in range(len(counts)):
+            current_score = scorer.score(stop=i) + scorer.score(start=i)
+            if current_score > best_score:
+                split_point = i
+                best_score = current_score
+        return best_score, split_point
+
     np.random.seed(4)
     scorer_factory = lambda counts, split_candidates=None: pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1, split_candidates)
@@ -17,7 +30,7 @@ def test_stat_split_into_segments_square():
 
         optimal_split = pasio.SquareSplitter().split(counts, scorer_factory)
 
-        two_split = pasio.split_on_two_segments_or_not(counts, scorer_factory)
+        two_split = split_on_two_segments_or_not(counts, scorer_factory)
 
         assert optimal_split[0] >= two_split[0]
         assert two_split[1] in optimal_split[1]
