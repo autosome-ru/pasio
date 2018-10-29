@@ -312,7 +312,7 @@ def test_not_constatnt_splitter():
 
     splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
     splits = splitter.split(sequence, simple_greedy_scorer_factory)
-    assert splits[1] == range(len(sequence))
+    assert splits[1] == list(range(len(sequence)))
 
     splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
     splits = splitter.split(sequence, simple_greedy_scorer_factory)
