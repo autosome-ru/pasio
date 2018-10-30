@@ -174,7 +174,7 @@ class SquareSplitter:
         split_scores[1] = score_computer.score(0, 1)
 
         for i, split in enumerate(split_candidates[1:], 1):
-            score_if_split_at_ = score_computer.all_suffixes_basic_score(i).astype('float64')
+            score_if_split_at_ = score_computer.all_suffixes_basic_score(i)
             score_if_split_at_ += split_scores[:i]
 
             if self.split_number_regularization_multiplier != 0:

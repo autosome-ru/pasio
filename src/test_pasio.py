@@ -85,7 +85,7 @@ class SimpleScorer:
         return stop-start
 
     def all_suffixes_basic_score(self, stop):
-        return np.array([self.basic_score(i, stop) for i in range(stop)])
+        return np.array([self.basic_score(i, stop) for i in range(stop)], dtype='float64')
 
 simple_scorer_factory = lambda counts, split_candidates=None: SimpleScorer(counts, split_candidates)
 
@@ -318,7 +318,7 @@ class SimpleGreedyScorer:
         return (stop-start)**0.5
 
     def all_suffixes_basic_score(self, stop):
-        return np.array([self.basic_score(i, stop) for i in range(stop)])
+        return np.array([self.basic_score(i, stop) for i in range(stop)], dtype='float64')
 
 simple_greedy_scorer_factory = lambda counts, split_candidates=None: SimpleGreedyScorer(counts, split_candidates)
 
