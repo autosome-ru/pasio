@@ -95,6 +95,9 @@ class LogMarginalLikelyhoodComputer:
         return self.score(start, stop) - self.segment_sum_logfac(start, stop)
 
     def score(self, start=None, stop=None):
+        return self.basic_score(start, stop) + self.constant
+
+    def basic_score(self, start=None, stop=None):
         if start is None:
             start = 0
         if stop is None:
@@ -106,7 +109,7 @@ class LogMarginalLikelyhoodComputer:
         shifted_segment_length = segment_length + self.beta
         add = log_gamma(shifted_segment_count)
         sub = shifted_segment_count * np.log(shifted_segment_length)
-        return add - sub + self.constant
+        return add - sub
 
     def all_suffixes_log_marginal_likelyhoods(self, stop):
         segment_sum_logfac_vec = self.logfac_cumsum[stop] - self.logfac_cumsum[0:stop]
@@ -114,6 +117,10 @@ class LogMarginalLikelyhoodComputer:
 
     # marginal likelihoods for segments [i, stop] for all i < stop
     def all_suffixes_score(self, stop):
+        return self.all_suffixes_basic_score(stop) + self.constant
+
+    # score without constant penalty for segment creation
+    def all_suffixes_basic_score(self, stop):
         # segment_count + alpha
         shifted_segment_count_vec = (self.alpha + self.cumsum[stop]) - self.cumsum[0:stop]
         # it's more efficient to add up numbers, then add result to vector
@@ -125,7 +132,7 @@ class LogMarginalLikelyhoodComputer:
         add_vec = log_gamma(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
         sub_vec = shifted_segment_count_vec * cached_log(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
 
-        return (add_vec - sub_vec) + self.constant
+        return add_vec - sub_vec
 
 def compute_score_from_splits(counts, splits, scorer_factory):
     scorer = scorer_factory(counts)
@@ -174,7 +181,7 @@ class SquareSplitter:
         split_scores[1] = score_computer.score(0, 1)
 
         for i, split in enumerate(split_candidates[1:], 1):
-            score_if_split_at_ = score_computer.all_suffixes_score(i).astype('float64')
+            score_if_split_at_ = score_computer.all_suffixes_basic_score(i).astype('float64')
             score_if_split_at_ += split_scores[:i]
 
             if self.split_number_regularization_multiplier != 0:
@@ -191,7 +198,7 @@ class SquareSplitter:
             right_borders[i] = np.argmax(score_if_split_at_)
             if right_borders[i] != 0:
                 num_splits[i] = num_splits[right_borders[i]] + 1
-            split_scores[i] = score_if_split_at_[right_borders[i]]
+            split_scores[i] = score_if_split_at_[right_borders[i]] + score_computer.constant
 
         return split_scores[-1], [split_candidates[i] for i in collect_split_points(right_borders[1:])]
 

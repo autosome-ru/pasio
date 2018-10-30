@@ -71,8 +71,12 @@ class SimpleScorer:
         if split_candidates is None:
             split_candidates = range(len(self.sequence)+1)
         self.split_candidates = split_candidates
+        self.constant = 0
 
     def score(self, start=0, stop=None):
+        return self.basic_score(start, stop)
+
+    def basic_score(self, start=0, stop=None):
         start = self.split_candidates[start]
         if stop is None:
             stop = self.split_candidates[-1]
@@ -82,8 +86,8 @@ class SimpleScorer:
             return (stop-start)**2
         return stop-start
 
-    def all_suffixes_score(self, stop):
-        return np.array([self.score(i, stop) for i in range(stop)])
+    def all_suffixes_basic_score(self, stop):
+        return np.array([self.basic_score(i, stop) for i in range(stop)])
 
 simple_scorer_factory = lambda counts, split_candidates=None: SimpleScorer(counts, split_candidates)
 
@@ -302,8 +306,12 @@ class SimpleGreedyScorer:
         if split_candidates is None:
             split_candidates = range(len(self.sequence)+1)
         self.split_candidates = split_candidates
+        self.constant = 0
 
     def score(self, start=0, stop=None):
+        return self.basic_score(start, stop)
+
+    def basic_score(self, start=0, stop=None):
         start = self.split_candidates[start]
         if stop is None:
             stop = self.split_candidates[-1]
@@ -311,8 +319,8 @@ class SimpleGreedyScorer:
             stop = self.split_candidates[stop]
         return (stop-start)**0.5
 
-    def all_suffixes_score(self, stop):
-        return np.array([self.score(i, stop) for i in range(stop)])
+    def all_suffixes_basic_score(self, stop):
+        return np.array([self.basic_score(i, stop) for i in range(stop)])
 
 simple_greedy_scorer_factory = lambda counts, split_candidates=None: SimpleGreedyScorer(counts, split_candidates)
 
