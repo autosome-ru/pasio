@@ -111,15 +111,8 @@ class LogMarginalLikelyhoodComputer:
         sub = shifted_segment_count * np.log(shifted_segment_length)
         return add - sub
 
-    def all_suffixes_log_marginal_likelyhoods(self, stop):
-        segment_sum_logfac_vec = self.logfac_cumsum[stop] - self.logfac_cumsum[0:stop]
-        return self.all_suffixes_score(self, stop) - segment_sum_logfac_vec
-
     # marginal likelihoods for segments [i, stop] for all i < stop
-    def all_suffixes_score(self, stop):
-        return self.all_suffixes_basic_score(stop) + self.constant
-
-    # score without constant penalty for segment creation
+    # These scores are not corrected for constant penalty for segment creation
     def all_suffixes_basic_score(self, stop):
         # segment_count + alpha
         shifted_segment_count_vec = (self.alpha + self.cumsum[stop]) - self.cumsum[0:stop]

@@ -7,8 +7,6 @@ import math
 import functools
 import operator
 
-
-
 def test_stat_split_into_segments_square():
     def split_on_two_segments_or_not(counts, scorer_factory):
         scorer = scorer_factory(counts)
@@ -216,13 +214,13 @@ def test_suffixes_scores():
                              np.random.poisson(20, 100)])
 
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    suffixes_scores = [scorer.score(i, 150) for i in range(150)]
-    assert np.allclose(scorer.all_suffixes_score(150), np.array(suffixes_scores))
+    suffixes_scores = [scorer.basic_score(i, 150) for i in range(150)]
+    assert np.allclose(scorer.all_suffixes_basic_score(150), np.array(suffixes_scores))
 
     counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0], dtype='int64')
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    suffixes_scores = [scorer.score(i, len(counts)-1) for i in range(len(counts)-1)]
-    assert np.allclose(scorer.all_suffixes_score(len(counts)-1), np.array(suffixes_scores))
+    suffixes_scores = [scorer.basic_score(i, len(counts)-1) for i in range(len(counts)-1)]
+    assert np.allclose(scorer.all_suffixes_basic_score(len(counts)-1), np.array(suffixes_scores))
 
 def test_suffixes_scores_with_candidates():
     np.random.seed(2)
@@ -232,8 +230,8 @@ def test_suffixes_scores_with_candidates():
     scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1,
         split_candidates = candidates)
-    candidate_suffixes = scorer.all_suffixes_score(9)[candidates[:-1]]
-    suffixes_just_candidates = scorer_with_candidates.all_suffixes_score(8)
+    candidate_suffixes = scorer.all_suffixes_basic_score(9)[candidates[:-1]]
+    suffixes_just_candidates = scorer_with_candidates.all_suffixes_basic_score(8)
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
     counts = np.concatenate([np.random.poisson(15, 100),
@@ -243,8 +241,8 @@ def test_suffixes_scores_with_candidates():
     scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1,
         split_candidates = candidates)
-    candidate_suffixes = scorer.all_suffixes_score(149)[candidates[:-1]]
-    suffixes_just_candidates = scorer_with_candidates.all_suffixes_score(len(candidates)-1)
+    candidate_suffixes = scorer.all_suffixes_basic_score(149)[candidates[:-1]]
+    suffixes_just_candidates = scorer_with_candidates.all_suffixes_basic_score(len(candidates)-1)
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
 def compute_log_marginal_likelyhood2(scorer, length):
