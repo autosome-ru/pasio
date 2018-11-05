@@ -72,9 +72,9 @@ class SimpleScorer:
         self.constant = 0
 
     def score(self, start=0, stop=None):
-        return self.basic_score(start, stop)
+        return self.self_score(start, stop)
 
-    def basic_score(self, start=0, stop=None):
+    def self_score(self, start=0, stop=None):
         start = self.split_candidates[start]
         if stop is None:
             stop = self.split_candidates[-1]
@@ -84,8 +84,8 @@ class SimpleScorer:
             return (stop-start)**2
         return stop-start
 
-    def all_suffixes_basic_score(self, stop):
-        return np.array([self.basic_score(i, stop) for i in range(stop)], dtype='float64')
+    def all_suffixes_self_score(self, stop):
+        return np.array([self.self_score(i, stop) for i in range(stop)], dtype='float64')
 
 simple_scorer_factory = lambda counts, split_candidates=None: SimpleScorer(counts, split_candidates)
 
@@ -214,13 +214,13 @@ def test_suffixes_scores():
                              np.random.poisson(20, 100)])
 
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    suffixes_scores = [scorer.basic_score(i, 150) for i in range(150)]
-    assert np.allclose(scorer.all_suffixes_basic_score(150), np.array(suffixes_scores))
+    suffixes_scores = [scorer.self_score(i, 150) for i in range(150)]
+    assert np.allclose(scorer.all_suffixes_self_score(150), np.array(suffixes_scores))
 
     counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0], dtype='int64')
     scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1)
-    suffixes_scores = [scorer.basic_score(i, len(counts)-1) for i in range(len(counts)-1)]
-    assert np.allclose(scorer.all_suffixes_basic_score(len(counts)-1), np.array(suffixes_scores))
+    suffixes_scores = [scorer.self_score(i, len(counts)-1) for i in range(len(counts)-1)]
+    assert np.allclose(scorer.all_suffixes_self_score(len(counts)-1), np.array(suffixes_scores))
 
 def test_suffixes_scores_with_candidates():
     np.random.seed(2)
@@ -230,8 +230,8 @@ def test_suffixes_scores_with_candidates():
     scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1,
         split_candidates = candidates)
-    candidate_suffixes = scorer.all_suffixes_basic_score(9)[candidates[:-1]]
-    suffixes_just_candidates = scorer_with_candidates.all_suffixes_basic_score(8)
+    candidate_suffixes = scorer.all_suffixes_self_score(9)[candidates[:-1]]
+    suffixes_just_candidates = scorer_with_candidates.all_suffixes_self_score(8)
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
     counts = np.concatenate([np.random.poisson(15, 100),
@@ -241,8 +241,8 @@ def test_suffixes_scores_with_candidates():
     scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(
         counts, 1, 1,
         split_candidates = candidates)
-    candidate_suffixes = scorer.all_suffixes_basic_score(149)[candidates[:-1]]
-    suffixes_just_candidates = scorer_with_candidates.all_suffixes_basic_score(len(candidates)-1)
+    candidate_suffixes = scorer.all_suffixes_self_score(149)[candidates[:-1]]
+    suffixes_just_candidates = scorer_with_candidates.all_suffixes_self_score(len(candidates)-1)
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
 def compute_log_marginal_likelyhood2(scorer, length):
@@ -307,9 +307,9 @@ class SimpleGreedyScorer:
         self.constant = 0
 
     def score(self, start=0, stop=None):
-        return self.basic_score(start, stop)
+        return self.self_score(start, stop)
 
-    def basic_score(self, start=0, stop=None):
+    def self_score(self, start=0, stop=None):
         start = self.split_candidates[start]
         if stop is None:
             stop = self.split_candidates[-1]
@@ -317,8 +317,8 @@ class SimpleGreedyScorer:
             stop = self.split_candidates[stop]
         return (stop-start)**0.5
 
-    def all_suffixes_basic_score(self, stop):
-        return np.array([self.basic_score(i, stop) for i in range(stop)], dtype='float64')
+    def all_suffixes_self_score(self, stop):
+        return np.array([self.self_score(i, stop) for i in range(stop)], dtype='float64')
 
 simple_greedy_scorer_factory = lambda counts, split_candidates=None: SimpleGreedyScorer(counts, split_candidates)
 

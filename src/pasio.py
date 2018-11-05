@@ -95,9 +95,9 @@ class LogMarginalLikelyhoodComputer:
         return self.score(start, stop) - self.segment_sum_logfac(start, stop)
 
     def score(self, start=None, stop=None):
-        return self.basic_score(start, stop) + self.constant
+        return self.self_score(start, stop) + self.constant
 
-    def basic_score(self, start=None, stop=None):
+    def self_score(self, start=None, stop=None):
         if start is None:
             start = 0
         if stop is None:
@@ -113,7 +113,7 @@ class LogMarginalLikelyhoodComputer:
 
     # marginal likelihoods for segments [i, stop] for all i < stop
     # These scores are not corrected for constant penalty for segment creation
-    def all_suffixes_basic_score(self, stop):
+    def all_suffixes_self_score(self, stop):
         # segment_count + alpha
         shifted_segment_count_vec = (self.alpha + self.cumsum[stop]) - self.cumsum[0:stop]
         # it's more efficient to add up numbers, then add result to vector
@@ -174,7 +174,7 @@ class SquareSplitter:
         split_scores[1] = score_computer.score(0, 1)
 
         for i, split in enumerate(split_candidates[1:], 1):
-            score_if_split_at_ = score_computer.all_suffixes_basic_score(i)
+            score_if_split_at_ = score_computer.all_suffixes_self_score(i)
             score_if_split_at_ += split_scores[:i]
 
             if self.split_number_regularization_multiplier != 0:
