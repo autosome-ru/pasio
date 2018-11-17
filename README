@@ -1,1 +1,19 @@
-PASIO
+== PASIO ==
+
+Pasio is a tool for denosing DNA coverage profiles coming from high-throughput sequencing data.
+Example of experiments pasio works well on is ChIP-seq, DNAse-seq, ATAC-seq.
+
+It takes a .bed file of counts (integer values, normalization is not supported). And produces
+tsv file with genome splited into segments which coverage can be treated as equal.
+
+Pasio runs on both python 2 and 3. The only dependencies are numpy and scipy.
+
+Recommended commandline for most practical cases is:
+
+`
+python src/pasio.py
+      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+      --alpha 5 --beta 1 --algorithm rounds
+      --window_shift 1250 --window_size 2500
+`
+
