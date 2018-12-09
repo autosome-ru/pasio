@@ -1,5 +1,5 @@
 # python2 src/pasio.py
-#       --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+#       --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
 #       --alpha 5 --beta 1 --algorithm rounds
 #       --window_shift 1250 --window_size 2500
 #       --tmpdir pasio_tmp --out_script pasio_parallel.sh --path_to_pasio 'python2 src/pasio.py'
@@ -348,7 +348,7 @@ def get_argparser():
         description = '''
 Example usage, simpliest for practical cases:
 python pasio.py
-      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1 --algorithm rounds
       --window_shift 1250 --window_size 2500
 ''',

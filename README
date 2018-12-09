@@ -12,8 +12,7 @@ Recommended commandline for most practical cases is:
 
 `
 python src/pasio.py
-      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1 --algorithm rounds
       --window_shift 1250 --window_size 2500
-`
 
