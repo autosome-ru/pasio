@@ -155,7 +155,7 @@ class SquareSplitter:
         self.length_regularization_function = length_regularization_function
         self.split_number_regularization_function = split_number_regularization_function
 
-    def split(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates=None):
         if split_candidates is None:
             split_candidates = np.arange(len(counts)+1)
         else:
@@ -165,7 +165,7 @@ class SquareSplitter:
                 split_candidates = np.append(np.array(split_candidates, dtype=int),
                                              [len(counts)])
 
-        score_computer = score_computer_factory(counts,
+        score_computer = scorer_factory(counts,
                                                 split_candidates=split_candidates)
         split_scores = np.zeros(len(split_candidates))
         right_borders = np.zeros(len(split_candidates), dtype=int)
@@ -200,13 +200,13 @@ class NotZeroSplitter:
     def __init__(self, base_splitter):
         self.base_splitter = base_splitter
 
-    def split(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates=None):
         if np.all(counts == 0):
             logger.info('Window contains just zeros. Skipping.')
-            scorer = score_computer_factory(counts, split_candidates)
+            scorer = scorer_factory(counts, split_candidates)
             return scorer.score(), [0, len(counts)]
         logger.info('Not zeros. Spliting.')
-        return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
 
 
 class NotConstantSplitter:
@@ -224,9 +224,9 @@ class NotConstantSplitter:
                                    0, 0)
         return split_candidates
 
-    def split(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates=None):
         split_candidates = self.get_non_constant_split_candidates(counts, split_candidates)
-        return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
 
 
 class SlidingWindowSplitter:
@@ -235,15 +235,15 @@ class SlidingWindowSplitter:
         self.window_shift = window_shift
         self.base_splitter = base_splitter
 
-    def split(self, counts, score_computer_factory):
+    def split(self, counts, scorer_factory):
         split_points = set([0])
         for start in range(0, len(counts), self.window_shift):
             logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
             stop = min(start+self.window_size, len(counts))
-            segment_score, segment_split_points = self.base_splitter.split(counts[start:stop], score_computer_factory)
+            segment_score, segment_split_points = self.base_splitter.split(counts[start:stop], scorer_factory)
             split_points.update([start+s for s in segment_split_points])
         logger.info('Final split of chromosome with %d split points' % (len(split_points)))
-        return self.base_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
+        return self.base_splitter.split(counts, scorer_factory, split_candidates=sorted(split_points))
 
 
 class RoundSplitter:
@@ -253,7 +253,7 @@ class RoundSplitter:
         self.num_rounds = num_rounds
         self.base_splitter = base_splitter
 
-    def split(self, counts, score_computer_factory):
+    def split(self, counts, scorer_factory):
         possible_split_points = np.arange(len(counts)+1)
         if self.num_rounds is None:
             num_rounds = len(counts)
@@ -270,7 +270,7 @@ class RoundSplitter:
                     round_, start, stop, len(possible_split_points[start_index:stop_index]),
                     float(start_index)/len(possible_split_points)*100, '%'))
                 segment_score, segment_split_points = self.base_splitter.split(
-                    counts[start:stop], score_computer_factory,
+                    counts[start:stop], scorer_factory,
                     split_candidates = np.array(
                         [p-start for p in possible_split_points[start_index:stop_index]]
                     )
@@ -285,7 +285,7 @@ class RoundSplitter:
             else:
                 assert len(new_split_points) < len(possible_split_points)
             possible_split_points = np.hstack([new_split_points, len(counts)])
-        final_score = compute_score_from_splits(counts, new_split_points, score_computer_factory)
+        final_score = compute_score_from_splits(counts, new_split_points, scorer_factory)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
                                                                                              final_score,
