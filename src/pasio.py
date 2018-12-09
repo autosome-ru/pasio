@@ -215,13 +215,16 @@ class NotConstantSplitter:
 
     def get_non_constant_split_candidates(self, counts, split_candidates=None):
         if split_candidates is None:
-            split_candidates = np.insert(np.where(counts[:-1] != counts[1:])[0] + 1, 0, 0)
+            # ------left_to_border|right_to_border------
+            left_to_border_positions = np.where( counts[:-1] != counts[1:] )[0]
+            right_to_border_positions = left_to_border_positions + 1
+            split_candidates = np.hstack([0, right_to_border_positions])
         else:
             if split_candidates[0] == 0:
                 split_candidates = split_candidates[1:]
-            split_candidates = np.insert(
-                                   split_candidates[counts[split_candidates] != counts[split_candidates-1]],
-                                   0, 0)
+            # retain split candidate if its count is different from count of previous of split candidate
+            different_from_previous = counts[split_candidates - 1] != counts[split_candidates]
+            split_candidates = np.hstack([0, split_candidates[different_from_previous]])
         return split_candidates
 
     def split(self, counts, scorer_factory, split_candidates=None):
