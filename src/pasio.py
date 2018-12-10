@@ -259,6 +259,28 @@ class RoundSplitter:
         self.num_rounds = num_rounds
         self.base_splitter = base_splitter
 
+    # Single round of candidate list reduction
+    def reduce_candidate_list(self, possible_split_points, counts, scorer_factory, round):
+        new_split_points_set = set([0])
+        for start_index in range(0, len(possible_split_points) - 1, self.window_shift):
+            stop_index = min(start_index + self.window_size, len(possible_split_points) - 1)
+            completion = float(start_index) / len(possible_split_points)
+            start = possible_split_points[start_index]
+            stop = possible_split_points[stop_index]
+            possible_split_points_in_window = possible_split_points[start_index:stop_index]
+            num_splits = len(possible_split_points_in_window)
+            logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %% of round complete)' % (
+                round, start, stop, num_splits, completion*100))
+            segment_split_candidates = np.array([p - start for p in possible_split_points_in_window])
+            segment_score, segment_split_points = self.base_splitter.split(
+                counts[start:stop], scorer_factory,
+                split_candidates = segment_split_candidates
+            )
+            new_split_points_set.update([start + s for s in segment_split_points])
+        # last possible split point is the last point
+        new_split_points_set.add(len(counts))
+        return np.array(sorted(new_split_points_set))
+
     def split(self, counts, scorer_factory):
         possible_split_points = np.arange(len(counts)+1)
         if self.num_rounds is None:
@@ -266,33 +288,15 @@ class RoundSplitter:
         else:
             num_rounds = self.num_rounds
         for round_ in range(num_rounds):
-            new_split_points_set = set([0])
             logger.info('Starting split round %d, num_candidates %d' % (round_, len(possible_split_points)))
-            for start_index in range(0, len(possible_split_points) - 1, self.window_shift):
-                stop_index = min(start_index + self.window_size, len(possible_split_points) - 1)
-                completion = float(start_index) / len(possible_split_points)
-                start = possible_split_points[start_index]
-                stop = possible_split_points[stop_index]
-                possible_split_points_in_window = possible_split_points[start_index:stop_index]
-                num_splits = len(possible_split_points_in_window)
-                logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %% of round complete)' % (
-                    round_, start, stop, num_splits, completion*100))
-                
-                segment_split_candidates = np.array([p - start for p in possible_split_points_in_window])
-                segment_score, segment_split_points = self.base_splitter.split(
-                    counts[start:stop], scorer_factory,
-                    split_candidates = segment_split_candidates
-                )
-                new_split_points_set.update([start + s for s in segment_split_points])
-            new_split_points_set.add(len(counts))
-            new_split_points = np.array(sorted(new_split_points_set))
-            # last possible split point is the last point
+            new_split_points = self.reduce_candidate_list(possible_split_points, counts, scorer_factory, round_)
             if np.array_equal(new_split_points, possible_split_points):
                 logger.info('Round:%d No split points removed. Finishing round' % round_)
                 # So no split points removed
                 break
             assert len(new_split_points) < len(possible_split_points)
             possible_split_points = new_split_points
+
         # the last point is the point (end+1). We don't use this point in final result
         resulting_splits = new_split_points[:-1]
         final_score = compute_score_from_splits(counts, resulting_splits, scorer_factory)
