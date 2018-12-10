@@ -284,21 +284,23 @@ class RoundSplitter:
                     split_candidates = segment_split_candidates
                 )
                 new_split_points_set.update([start + s for s in segment_split_points])
+            new_split_points_set.add(len(counts))
             new_split_points = np.array(sorted(new_split_points_set))
             # last possible split point is the last point
-            if np.array_equal(new_split_points, possible_split_points[:-1]):
+            if np.array_equal(new_split_points, possible_split_points):
                 logger.info('Round:%d No split points removed. Finishing round' % round_)
                 # So no split points removed
                 break
-            else:
-                assert len(new_split_points) < len(possible_split_points)
-            possible_split_points = np.hstack([new_split_points, len(counts)])
-        final_score = compute_score_from_splits(counts, new_split_points, scorer_factory)
+            assert len(new_split_points) < len(possible_split_points)
+            possible_split_points = new_split_points
+        # the last point is the point (end+1). We don't use this point in final result
+        resulting_splits = new_split_points[:-1]
+        final_score = compute_score_from_splits(counts, resulting_splits, scorer_factory)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
                                                                                              final_score,
-                                                                                             len(new_split_points)))
-        return (final_score, list(new_split_points))
+                                                                                             len(resulting_splits)))
+        return (final_score, list(resulting_splits))
 
 def parse_bedgraph(filename):
     '''
