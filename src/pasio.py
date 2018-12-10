@@ -284,7 +284,7 @@ class RoundSplitter:
                 new_split_points.update([start+s for s in segment_split_points])
             new_split_points = np.array(sorted(new_split_points))
             # last possible split point is the last point
-            if np.all(new_split_points == possible_split_points[:-1]):
+            if np.array_equal(new_split_points, possible_split_points[:-1]):
                 logger.info('Round:%d No split points removed. Finishing round' % round_)
                 # So no split points removed
                 break
@@ -432,7 +432,7 @@ if __name__ == '__main__':
         split_number_regularization_function=lambda x:x)
 
     if args.no_split_constant:
-        square_splitter = NotConstantSplitter(base_splitter = square_splitter)    
+        square_splitter = NotConstantSplitter(base_splitter = square_splitter)
 
     if args.algorithm == 'slidingwindow':
         splitter = SlidingWindowSplitter(window_size=args.window_size,
