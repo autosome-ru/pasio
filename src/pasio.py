@@ -26,21 +26,21 @@ class LogComputer:
         self.precomputed = np.log(np.arange(self.cache_size))
 
     # uses fast algorithm if maximal value of x is specified and doesn't exceed cache size
-    def __call__(self, x, max_value = float('inf')):
-        if type(x) is np.ndarray:
-            if max_value < self.cache_size:
-                return self.precomputed[x]
-            else:
-                result = np.zeros(x.shape)
-                is_small = x < self.cache_size
-                result[is_small] = self.precomputed[x[is_small]]
-                result[~is_small] = np.log(x[~is_small])
-                return result
+    def compute_for_array(self, x, max_value = float('inf')):
+        if max_value < self.cache_size:
+            return self.precomputed[x]
         else:
-            if x < self.cache_size:
-                return self.precomputed[x]
-            else:
-                return np.log(x)
+            result = np.zeros(x.shape)
+            is_small = x < self.cache_size
+            result[is_small] = self.precomputed[x[is_small]]
+            result[~is_small] = np.log(x[~is_small])
+            return result
+
+    def compute_for_number(self, x):
+        if x < self.cache_size:
+            return self.precomputed[x]
+        else:
+            return np.log(x)
 
 # Works only with non-negative integer values
 class LogGammaComputer:
@@ -48,22 +48,22 @@ class LogGammaComputer:
         self.cache_size = cache_size
         self.precomputed = scipy.special.gammaln(np.arange(self.cache_size))
 
-    # uses fast algorithm if maximal value of x is specified and doesn't exceed cache size
-    def __call__(self, x, max_value = float('inf')):
-        if type(x) is np.ndarray:
-            if max_value < self.cache_size:
-                return self.precomputed[x]
-            else:
-                result = np.zeros(x.shape)
-                is_small = x < self.cache_size
-                result[is_small] = self.precomputed[x[is_small]]
-                result[~is_small] = scipy.special.gammaln(x[~is_small])
-                return result
+    def compute_for_number(self, x):
+        if x < self.cache_size:
+            return self.precomputed[x]
         else:
-            if x < self.cache_size:
-                return self.precomputed[x]
-            else:
-                return scipy.special.gammaln(x)
+            return scipy.special.gammaln(x)
+
+    # uses fast algorithm if maximal value of x is specified and doesn't exceed cache size
+    def compute_for_array(self, x, max_value = float('inf')):
+        if max_value < self.cache_size:
+            return self.precomputed[x]
+        else:
+            result = np.zeros(x.shape)
+            is_small = x < self.cache_size
+            result[is_small] = self.precomputed[x[is_small]]
+            result[~is_small] = scipy.special.gammaln(x[~is_small])
+            return result
 
 cached_log = LogComputer()
 log_gamma = LogGammaComputer()
@@ -79,9 +79,9 @@ class LogMarginalLikelyhoodComputer:
             assert split_candidates[0] == 0
             self.split_candidates = split_candidates
         self.cumsum = np.hstack([0, np.cumsum(counts)])[self.split_candidates]
-        self.logfac_cumsum = np.hstack([0, np.cumsum(log_gamma(counts + 1))])[self.split_candidates]
+        self.logfac_cumsum = np.hstack([0, np.cumsum(log_gamma.compute_for_array(counts + 1))])[self.split_candidates]
 
-        self.constant = alpha*np.log(beta)-log_gamma(alpha)
+        self.constant = alpha * cached_log.compute_for_number(beta) - log_gamma.compute_for_number(alpha)
 
     def segment_sum_logfac(self, start=None, stop=None):
         if start is None:
@@ -101,8 +101,8 @@ class LogMarginalLikelyhoodComputer:
         segment_counts = self.cumsum[stops] - self.cumsum[starts]
         shifted_segment_counts = segment_counts + self.alpha
         shifted_segment_lengths = segment_lengths + self.beta
-        add = log_gamma(shifted_segment_counts)
-        sub = shifted_segment_counts * np.log(shifted_segment_lengths)
+        add = log_gamma.compute_for_array(shifted_segment_counts)
+        sub = shifted_segment_counts * cached_log.compute_for_array(shifted_segment_lengths)
         self_scores = add - sub
         scores = self_scores + self.constant
         return scores - segment_sum_logfacs
@@ -120,8 +120,8 @@ class LogMarginalLikelyhoodComputer:
         shifted_segment_count = segment_count + self.alpha
         segment_length = self.split_candidates[stop] - self.split_candidates[start]
         shifted_segment_length = segment_length + self.beta
-        add = log_gamma(shifted_segment_count)
-        sub = shifted_segment_count * np.log(shifted_segment_length)
+        add = log_gamma.compute_for_number(shifted_segment_count)
+        sub = shifted_segment_count * cached_log.compute_for_number(shifted_segment_length)
         return add - sub
 
     # marginal likelihoods for segments [i, stop] for all i < stop
@@ -135,8 +135,8 @@ class LogMarginalLikelyhoodComputer:
         # segment_length + beta
         shifted_segment_length_vec = (self.beta + self.split_candidates[stop]) - self.split_candidates[:stop]
 
-        add_vec = log_gamma(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
-        sub_vec = shifted_segment_count_vec * cached_log(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
+        add_vec = log_gamma.compute_for_array(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
+        sub_vec = shifted_segment_count_vec * cached_log.compute_for_array(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
 
         return add_vec - sub_vec
 
