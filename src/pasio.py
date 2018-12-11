@@ -91,8 +91,21 @@ class LogMarginalLikelyhoodComputer:
         sum_logfac = self.logfac_cumsum[stop] - self.logfac_cumsum[start]
         return sum_logfac
 
-    def log_marginal_likelyhood(self, start=None, stop=None):
-        return self.score(start, stop) - self.segment_sum_logfac(start, stop)
+    def log_marginal_likelyhoods(self):
+        starts = np.arange(0, len(self.split_candidates) - 1, dtype=int)
+        stops = np.arange(1, len(self.split_candidates), dtype=int)
+        split_candidates = np.array(self.split_candidates)
+        segment_lengths = split_candidates[stops] - split_candidates[starts]
+
+        segment_sum_logfacs = self.logfac_cumsum[stops] - self.logfac_cumsum[starts]
+        segment_counts = self.cumsum[stops] - self.cumsum[starts]
+        shifted_segment_counts = segment_counts + self.alpha
+        shifted_segment_lengths = segment_lengths + self.beta
+        add = log_gamma(shifted_segment_counts)
+        sub = shifted_segment_counts * np.log(shifted_segment_lengths)
+        self_scores = add - sub
+        scores = self_scores + self.constant
+        return scores - segment_sum_logfacs
 
     def score(self, start=None, stop=None):
         return self.self_score(start, stop) + self.constant
@@ -338,25 +351,20 @@ def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
             score, splits = splitter.split(counts, scorer_factory)
-            sum_logfac = scorer_factory(counts, split_candidates=splits).segment_sum_logfac()
-            log_likelyhood = compute_score_from_splits(counts, splits, scorer_factory) - sum_logfac
+            splits.append( len(counts) )
+            scorer = scorer_factory(counts, split_candidates = splits)
+            sum_logfac = scorer.segment_sum_logfac()
+            log_likelyhood = score - sum_logfac
             logger.info('chrom %s finished, score %f, number of splits %d. '
-                        'Log likelyhood: %f.'% (chrom, score, len(splits), log_likelyhood))
-            scorer = scorer_factory(counts, splits+[len(counts)])
+                        'Log likelyhood: %f.'% (chrom, score, len(splits) - 2, log_likelyhood))
             logger.info('Starting output of chrom %s' % (chrom))
-            for i, (start, stop) in enumerate(zip(splits, splits[1:])):
+            for i, (start, stop, log_marginal_likelyhood) in enumerate(zip(splits, splits[1:], scorer.log_marginal_likelyhoods())):
                 outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
                                                             start+chrom_start,
                                                             stop+chrom_start,
                                                             counts[start:stop].mean(),
                                                             stop-start,
-                                                            scorer.log_marginal_likelyhood(i, i+1)))
-            outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
-                                                        splits[-1]+chrom_start,
-                                                        len(counts)+chrom_start,
-                                                        counts[splits[-1]:].mean(),
-                                                        len(counts)-splits[-1],
-                                                        scorer.log_marginal_likelyhood(len(splits)-1)))
+                                                            log_marginal_likelyhood))
 
 def get_argparser():
     argparser = argparse.ArgumentParser(
