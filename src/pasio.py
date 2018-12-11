@@ -1,5 +1,5 @@
 # python2 src/pasio.py
-#       --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+#       --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
 #       --alpha 5 --beta 1 --algorithm rounds
 #       --window_shift 1250 --window_size 2500
 #       --tmpdir pasio_tmp --out_script pasio_parallel.sh --path_to_pasio 'python2 src/pasio.py'
@@ -155,7 +155,7 @@ class SquareSplitter:
         self.length_regularization_function = length_regularization_function
         self.split_number_regularization_function = split_number_regularization_function
 
-    def split(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates=None):
         if split_candidates is None:
             split_candidates = np.arange(len(counts)+1)
         else:
@@ -165,7 +165,7 @@ class SquareSplitter:
                 split_candidates = np.append(np.array(split_candidates, dtype=int),
                                              [len(counts)])
 
-        score_computer = score_computer_factory(counts,
+        score_computer = scorer_factory(counts,
                                                 split_candidates=split_candidates)
         split_scores = np.zeros(len(split_candidates))
         right_borders = np.zeros(len(split_candidates), dtype=int)
@@ -178,7 +178,7 @@ class SquareSplitter:
             score_if_split_at_ += split_scores[:i]
 
             if self.split_number_regularization_multiplier != 0:
-                score_if_split_at_[:] -= self.split_number_regularization_multiplier*(
+                score_if_split_at_ -= self.split_number_regularization_multiplier*(
                     self.split_number_regularization_function(num_splits[:i]+1))
                 score_if_split_at_[0] += self.split_number_regularization_multiplier*self.split_number_regularization_function(1)
 
@@ -186,7 +186,7 @@ class SquareSplitter:
                 last_segment_length_regularization = (self.length_regularization_multiplier*
                                                       self.length_regularization_function(
                                                           split - split_candidates[:i]))
-                score_if_split_at_[:] -= last_segment_length_regularization[:i]
+                score_if_split_at_ -= last_segment_length_regularization[:i]
 
             right_borders[i] = np.argmax(score_if_split_at_)
             if right_borders[i] != 0:
@@ -200,13 +200,13 @@ class NotZeroSplitter:
     def __init__(self, base_splitter):
         self.base_splitter = base_splitter
 
-    def split(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates=None):
         if np.all(counts == 0):
             logger.info('Window contains just zeros. Skipping.')
-            scorer = score_computer_factory(counts, split_candidates)
+            scorer = scorer_factory(counts, split_candidates)
             return scorer.score(), [0, len(counts)]
         logger.info('Not zeros. Spliting.')
-        return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
 
 
 class NotConstantSplitter:
@@ -215,18 +215,26 @@ class NotConstantSplitter:
 
     def get_non_constant_split_candidates(self, counts, split_candidates=None):
         if split_candidates is None:
-            split_candidates = np.insert(np.where(counts[:-1] != counts[1:])[0] + 1, 0, 0)
+            # ------left_to_border|right_to_border------
+            left_to_border_positions = np.where( counts[:-1] != counts[1:] )[0]
+            right_to_border_positions = left_to_border_positions + 1
+            if len(right_to_border_positions) == 0:
+                return [0]
+            # don't take a point out of the segment's border as a split candidate
+            if right_to_border_positions[-1] == len(counts):
+                right_to_border_positions = right_to_border_positions[0:-1]
+            split_candidates = np.hstack([0, right_to_border_positions])
         else:
             if split_candidates[0] == 0:
                 split_candidates = split_candidates[1:]
-            split_candidates = np.insert(
-                                   split_candidates[counts[split_candidates] != counts[split_candidates-1]],
-                                   0, 0)
+            # retain split candidate if its count is different from count of previous of split candidate
+            different_from_previous = counts[split_candidates - 1] != counts[split_candidates]
+            split_candidates = np.hstack([0, split_candidates[different_from_previous]])
         return split_candidates
 
-    def split(self, counts, score_computer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates=None):
         split_candidates = self.get_non_constant_split_candidates(counts, split_candidates)
-        return self.base_splitter.split(counts, score_computer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
 
 
 class SlidingWindowSplitter:
@@ -235,15 +243,15 @@ class SlidingWindowSplitter:
         self.window_shift = window_shift
         self.base_splitter = base_splitter
 
-    def split(self, counts, score_computer_factory):
+    def split(self, counts, scorer_factory):
         split_points = set([0])
         for start in range(0, len(counts), self.window_shift):
             logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
             stop = min(start+self.window_size, len(counts))
-            segment_score, segment_split_points = self.base_splitter.split(counts[start:stop], score_computer_factory)
+            segment_score, segment_split_points = self.base_splitter.split(counts[start:stop], scorer_factory)
             split_points.update([start+s for s in segment_split_points])
         logger.info('Final split of chromosome with %d split points' % (len(split_points)))
-        return self.base_splitter.split(counts, score_computer_factory, split_candidates=sorted(split_points))
+        return self.base_splitter.split(counts, scorer_factory, split_candidates=sorted(split_points))
 
 
 class RoundSplitter:
@@ -253,44 +261,52 @@ class RoundSplitter:
         self.num_rounds = num_rounds
         self.base_splitter = base_splitter
 
-    def split(self, counts, score_computer_factory):
+    # Single round of candidate list reduction
+    def reduce_candidate_list(self, possible_split_points, counts, scorer_factory, round):
+        new_split_points_set = set([0])
+        for start_index in range(0, len(possible_split_points) - 1, self.window_shift):
+            stop_index = min(start_index + self.window_size, len(possible_split_points) - 1)
+            completion = float(start_index) / len(possible_split_points)
+            start = possible_split_points[start_index]
+            stop = possible_split_points[stop_index]
+            possible_split_points_in_window = possible_split_points[start_index:stop_index]
+            num_splits = len(possible_split_points_in_window)
+            logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %% of round complete)' % (
+                round, start, stop, num_splits, completion*100))
+            segment_split_candidates = np.array([p - start for p in possible_split_points_in_window])
+            segment_score, segment_split_points = self.base_splitter.split(
+                counts[start:stop], scorer_factory,
+                split_candidates = segment_split_candidates
+            )
+            new_split_points_set.update([start + s for s in segment_split_points])
+        # last possible split point is the last point
+        new_split_points_set.add(len(counts))
+        return np.array(sorted(new_split_points_set))
+
+    def split(self, counts, scorer_factory):
         possible_split_points = np.arange(len(counts)+1)
         if self.num_rounds is None:
             num_rounds = len(counts)
         else:
             num_rounds = self.num_rounds
         for round_ in range(num_rounds):
-            new_split_points = set([0])
             logger.info('Starting split round %d, num_candidates %d' % (round_, len(possible_split_points)))
-            for start_index in range(0, len(possible_split_points)-1, self.window_shift):
-                stop_index = min(start_index+self.window_size, len(possible_split_points)-1)
-                start = possible_split_points[start_index]
-                stop = possible_split_points[stop_index]
-                logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %s of round complete)' % (
-                    round_, start, stop, len(possible_split_points[start_index:stop_index]),
-                    float(start_index)/len(possible_split_points)*100, '%'))
-                segment_score, segment_split_points = self.base_splitter.split(
-                    counts[start:stop], score_computer_factory,
-                    split_candidates = np.array(
-                        [p-start for p in possible_split_points[start_index:stop_index]]
-                    )
-                )
-                new_split_points.update([start+s for s in segment_split_points])
-            new_split_points = np.array(sorted(new_split_points))
-            # last possible split point is the last point
-            if np.all(new_split_points == possible_split_points[:-1]):
+            new_split_points = self.reduce_candidate_list(possible_split_points, counts, scorer_factory, round_)
+            if np.array_equal(new_split_points, possible_split_points):
                 logger.info('Round:%d No split points removed. Finishing round' % round_)
                 # So no split points removed
                 break
-            else:
-                assert len(new_split_points) < len(possible_split_points)
-            possible_split_points = np.hstack([new_split_points, len(counts)])
-        final_score = compute_score_from_splits(counts, new_split_points, score_computer_factory)
+            assert len(new_split_points) < len(possible_split_points)
+            possible_split_points = new_split_points
+
+        # the last point is the point (end+1). We don't use this point in final result
+        resulting_splits = new_split_points[:-1]
+        final_score = compute_score_from_splits(counts, resulting_splits, scorer_factory)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
                                                                                              final_score,
-                                                                                             len(new_split_points)))
-        return (final_score, list(new_split_points))
+                                                                                             len(resulting_splits)))
+        return (final_score, list(resulting_splits))
 
 def parse_bedgraph(filename):
     '''
@@ -348,7 +364,7 @@ def get_argparser():
         description = '''
 Example usage, simpliest for practical cases:
 python pasio.py
-      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<WAY TO OUTPUT bedGraph FILE>
+      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1 --algorithm rounds
       --window_shift 1250 --window_size 2500
 ''',
@@ -426,7 +442,7 @@ if __name__ == '__main__':
         split_number_regularization_function=lambda x:x)
 
     if args.no_split_constant:
-        square_splitter = NotConstantSplitter(base_splitter = square_splitter)    
+        square_splitter = NotConstantSplitter(base_splitter = square_splitter)
 
     if args.algorithm == 'slidingwindow':
         splitter = SlidingWindowSplitter(window_size=args.window_size,
