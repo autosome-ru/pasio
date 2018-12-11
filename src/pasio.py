@@ -339,7 +339,7 @@ def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
             score, splits = splitter.split(counts, scorer_factory)
             sum_logfac = scorer_factory(counts, split_candidates=splits).segment_sum_logfac()
-            log_likelyhood = compute_score_from_splits(counts, splits, scorer_factory) - sum_logfac
+            log_likelyhood = score - sum_logfac
             logger.info('chrom %s finished, score %f, number of splits %d. '
                         'Log likelyhood: %f.'% (chrom, score, len(splits), log_likelyhood))
             scorer = scorer_factory(counts, splits+[len(counts)])
