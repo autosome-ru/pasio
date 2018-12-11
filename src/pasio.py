@@ -218,6 +218,8 @@ class NotConstantSplitter:
             # ------left_to_border|right_to_border------
             left_to_border_positions = np.where( counts[:-1] != counts[1:] )[0]
             right_to_border_positions = left_to_border_positions + 1
+            if len(right_to_border_positions) == 0:
+                return [0]
             # don't take a point out of the segment's border as a split candidate
             if right_to_border_positions[-1] == len(counts):
                 right_to_border_positions = right_to_border_positions[0:-1]
