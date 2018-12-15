@@ -71,8 +71,8 @@ class LogGammaComputer:
         result[~is_small] = scipy.special.gammaln(x[~is_small])
         return result
 
-cached_log = LogComputer()
-log_gamma = LogGammaComputer()
+log_computer = LogComputer()
+log_gamma_computer = LogGammaComputer()
 
 class LogMarginalLikelyhoodComputer:
     def __init__(self, counts, alpha, beta, split_candidates=None):
@@ -85,9 +85,9 @@ class LogMarginalLikelyhoodComputer:
             assert split_candidates[0] == 0
             self.split_candidates = split_candidates
         self.cumsum = np.hstack([0, np.cumsum(counts)])[self.split_candidates]
-        self.logfac_cumsum = np.hstack([0, np.cumsum(log_gamma.compute_for_array(counts + 1))])[self.split_candidates]
+        self.logfac_cumsum = np.hstack([0, np.cumsum(log_gamma_computer.compute_for_array(counts + 1))])[self.split_candidates]
 
-        self.constant = alpha * cached_log.compute_for_number(beta) - log_gamma.compute_for_number(alpha)
+        self.constant = alpha * log_computer.compute_for_number(beta) - log_gamma_computer.compute_for_number(alpha)
 
     def segment_sum_logfac(self, start=None, stop=None):
         if start is None:
@@ -107,8 +107,8 @@ class LogMarginalLikelyhoodComputer:
         segment_counts = self.cumsum[stops] - self.cumsum[starts]
         shifted_segment_counts = segment_counts + self.alpha
         shifted_segment_lengths = segment_lengths + self.beta
-        add = log_gamma.compute_for_array(shifted_segment_counts)
-        sub = shifted_segment_counts * cached_log.compute_for_array(shifted_segment_lengths)
+        add = log_gamma_computer.compute_for_array(shifted_segment_counts)
+        sub = shifted_segment_counts * log_computer.compute_for_array(shifted_segment_lengths)
         self_scores = add - sub
         scores = self_scores + self.constant
         return scores - segment_sum_logfacs
@@ -126,8 +126,8 @@ class LogMarginalLikelyhoodComputer:
         shifted_segment_count = segment_count + self.alpha
         segment_length = self.split_candidates[stop] - self.split_candidates[start]
         shifted_segment_length = segment_length + self.beta
-        add = log_gamma.compute_for_number(shifted_segment_count)
-        sub = shifted_segment_count * cached_log.compute_for_number(shifted_segment_length)
+        add = log_gamma_computer.compute_for_number(shifted_segment_count)
+        sub = shifted_segment_count * log_computer.compute_for_number(shifted_segment_length)
         return add - sub
 
     # marginal likelihoods for segments [i, stop] for all i < stop
@@ -141,8 +141,8 @@ class LogMarginalLikelyhoodComputer:
         # segment_length + beta
         shifted_segment_length_vec = (self.beta + self.split_candidates[stop]) - self.split_candidates[:stop]
 
-        add_vec = log_gamma.compute_for_array(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
-        sub_vec = shifted_segment_count_vec * cached_log.compute_for_array(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
+        add_vec = log_gamma_computer.compute_for_array(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
+        sub_vec = shifted_segment_count_vec * log_computer.compute_for_array(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
 
         return add_vec - sub_vec
 
