@@ -174,7 +174,7 @@ class SquareSplitter:
         self.length_regularization_function = length_regularization_function
         self.split_number_regularization_function = split_number_regularization_function
 
-    def split(self, counts, scorer_factory, split_candidates=None):
+    def normalize_split_candidates(self, counts, split_candidates = None):
         if split_candidates is None:
             split_candidates = np.arange(len(counts)+1)
         else:
@@ -183,9 +183,11 @@ class SquareSplitter:
             else:
                 split_candidates = np.append(np.array(split_candidates, dtype=int),
                                              [len(counts)])
+        return split_candidates
 
-        score_computer = scorer_factory(counts,
-                                                split_candidates=split_candidates)
+    def split(self, counts, scorer_factory, split_candidates=None):
+        split_candidates = self.normalize_split_candidates(counts, split_candidates)
+        score_computer = scorer_factory(counts, split_candidates=split_candidates)
         split_scores = np.zeros(len(split_candidates))
         right_borders = np.zeros(len(split_candidates), dtype=int)
         num_splits = np.zeros(len(split_candidates))
