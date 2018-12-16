@@ -194,12 +194,13 @@ class SquareSplitter:
 
     def split_with_normalizations(self, counts, scorer_factory, split_candidates):
         score_computer = scorer_factory(counts, split_candidates=split_candidates)
-        right_borders = np.empty(len(split_candidates), dtype=int)
-        split_scores = np.empty(len(split_candidates))
+        num_split_candidates = len(split_candidates)
+        right_borders = np.empty(num_split_candidates, dtype=int)
+        split_scores = np.empty(num_split_candidates)
         split_scores[0] = 0
-        num_splits = np.zeros(len(split_candidates))
+        num_splits = np.zeros(num_split_candidates)
 
-        for i, split in enumerate(split_candidates[1:], 1):
+        for i in range(1, num_split_candidates):
             score_if_split_at_ = score_computer.all_suffixes_self_score(i)
             score_if_split_at_ += split_scores[:i]
 
@@ -209,7 +210,7 @@ class SquareSplitter:
                 score_if_split_at_[0] += self.split_number_regularization_multiplier * self.split_number_regularization_function(1)
 
             if self.length_regularization_multiplier != 0:
-                length_regulatization = self.length_regularization_function(split - split_candidates[:i])
+                length_regulatization = self.length_regularization_function(split_candidates[i] - split_candidates[:i])
                 last_segment_length_regularization = self.length_regularization_multiplier * length_regulatization
                 score_if_split_at_ -= last_segment_length_regularization[:i]
 
@@ -224,11 +225,12 @@ class SquareSplitter:
 
     def split_without_normalizations(self, counts, scorer_factory, split_candidates):
         score_computer = scorer_factory(counts, split_candidates=split_candidates)
-        right_borders = np.empty(len(split_candidates), dtype=int)
-        split_scores = np.empty(len(split_candidates))
+        num_split_candidates = len(split_candidates)
+        right_borders = np.empty(num_split_candidates, dtype=int)
+        split_scores = np.empty(num_split_candidates)
         split_scores[0] = 0
 
-        for i, split in enumerate(split_candidates[1:], 1):
+        for i in range(1, num_split_candidates):
             score_if_split_at_ = score_computer.all_suffixes_self_score(i)
             score_if_split_at_ += split_scores[:i]
             right_border = np.argmax(score_if_split_at_)
