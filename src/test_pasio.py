@@ -26,19 +26,19 @@ def test_stat_split_into_segments_square():
         counts = np.concatenate([np.random.poisson(15, 100),
                                  np.random.poisson(20, 100)])
 
-        optimal_split = pasio.SquareSplitter().split(counts, scorer_factory)
+        optimal_score, optimal_split = pasio.SquareSplitter().split(counts, scorer_factory)
 
-        two_split = split_on_two_segments_or_not(counts, scorer_factory)
+        two_split_score, two_split_point = split_on_two_segments_or_not(counts, scorer_factory)
 
-        assert optimal_split[0] >= two_split[0]
-        assert two_split[1] in optimal_split[1]
-        assert np.allclose(optimal_split[0],
+        assert optimal_score >= two_split_score
+        assert two_split_point in optimal_split
+        assert np.allclose(optimal_score,
                            pasio.compute_score_from_splits(
-                               counts, optimal_split[1], scorer_factory))
-        if (two_split[1] is None):
-            assert optimal_split[1] == [0,200]
+                               counts, optimal_split, scorer_factory))
+        if (two_split_point is None):
+            assert optimal_split == [0,200]
         else:
-            assert abs(two_split[1]-100) < 10
+            assert abs(two_split_point - 100) < 10
 
 def test_log_marginal_likelyhood_exact():
     def exact_function(counts, alpha, beta):
@@ -91,72 +91,67 @@ simple_scorer_factory = lambda counts, split_candidates=None: SimpleScorer(count
 
 def test_split_into_segments_square():
     sequence = 'A'
-    optimal_split = pasio.SquareSplitter().split(sequence,
-                                                 simple_scorer_factory)
-    assert optimal_split[1] == [0]
-    assert optimal_split[0] == 1
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence, simple_scorer_factory)
+    assert optimal_split == [0]
+    assert optimal_score == 1
 
     sequence = 'AAA'
-    optimal_split = pasio.SquareSplitter().split(sequence,
-                                                 simple_scorer_factory)
-    assert optimal_split[1] == [0]
-    assert optimal_split[0] == 9
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence, simple_scorer_factory)
+    assert optimal_split == [0]
+    assert optimal_score == 9
 
     sequence = 'AAABBB'
-    optimal_split = pasio.SquareSplitter().split(sequence,
-                                                 simple_scorer_factory)
-    assert optimal_split[1] == [0,3]
-    assert optimal_split[0] == 9+9
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence, simple_scorer_factory)
+    assert optimal_split == [0,3]
+    assert optimal_score == 9+9
 
     sequence = 'AAABBBC'
-    optimal_split = pasio.SquareSplitter().split(sequence,
-                                                 simple_scorer_factory)
-    assert optimal_split[1] == [0,3,6]
-    assert optimal_split[0] == 9+9+1
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence, simple_scorer_factory)
+    assert optimal_split == [0,3,6]
+    assert optimal_score == 9+9+1
 
     sequence = 'ABBBC'
-    optimal_split = pasio.SquareSplitter().split(sequence,
-                                                 simple_scorer_factory)
-    assert optimal_split[1] == [0,1,4]
-    assert optimal_split[0] == 1+9+1
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence, simple_scorer_factory)
+    assert optimal_split == [0,1,4]
+    assert optimal_score == 1+9+1
 
 
 def test_split_into_segments_candidates():
 
     sequence = 'AAABBB'
-    optimal_split = pasio.SquareSplitter().split(sequence,
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence,
                                                  simple_scorer_factory,
                                                  split_candidates=[0,1,2,3,5,6])
-    assert optimal_split[1] == [0,3]
-    assert optimal_split[0] == 9+9
+    assert optimal_split == [0,3]
+    assert optimal_score == 9+9
 
     sequence = 'AAABBB'
-    optimal_split = pasio.SquareSplitter().split(sequence,
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence,
                                                  simple_scorer_factory,
                                                  split_candidates=[0,3,5,6])
-    assert optimal_split[1] == [0,3]
-    assert optimal_split[0] == 9+9
+    assert optimal_split == [0,3]
+    assert optimal_score == 9+9
 
     sequence = 'AAABBBC'
-    optimal_split = pasio.SquareSplitter().split(sequence,
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence,
                                                  simple_scorer_factory,
                                                  split_candidates=[0,3,7])
-    assert optimal_split[1] == [0,3]
-    assert optimal_split[0] == 9+4
+    assert optimal_split == [0,3]
+    assert optimal_score == 9+4
 
     sequence = 'AAABBBC'
-    optimal_split = pasio.SquareSplitter().split(sequence,
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence,
                                                  simple_scorer_factory,
                                                  split_candidates=[0,3])
-    assert optimal_split[1] == [0,3]
-    assert optimal_split[0] == 9+4
+    assert optimal_split == [0,3]
+    assert optimal_score == 9+4
 
     sequence = 'AAAAAA'
-    optimal_split = pasio.SquareSplitter().split(sequence,
+    optimal_score, optimal_split = pasio.SquareSplitter().split(sequence,
                                                  simple_scorer_factory,
                                                  split_candidates=[0,3])
-    assert optimal_split[1] == [0]
-    assert optimal_split[0] == 36
+    assert optimal_split == [0]
+    assert optimal_score == 36
 
 def test_split_with_split_num_regularization():
     # score of split 'AAA|B|AA' = 9+1+4 = 14
@@ -165,10 +160,10 @@ def test_split_with_split_num_regularization():
     sequence = 'AAABAA'
     splitter = pasio.SquareSplitter(split_number_regularization_multiplier = 3,
                                     split_number_regularization_function = lambda x:x)
-    optimal_split = splitter.split(sequence,
+    optimal_score, optimal_split = splitter.split(sequence,
                                    SimpleScorer)
-    assert optimal_split[1] == [0,3]
-    assert optimal_split[0] == 9
+    assert optimal_split == [0,3]
+    assert optimal_score == 9
 
 def test_split_with_length_regularization():
     # score of split 'AAA|B|AA' = 9+1+4 = 14
@@ -177,21 +172,19 @@ def test_split_with_length_regularization():
     sequence = 'AAABAA'
     splitter = pasio.SquareSplitter(length_regularization_multiplier = 1.5,
                                     length_regularization_function = lambda x:1/np.log(1+x))
-    optimal_split = splitter.split(sequence,
-                                   SimpleScorer)
+    optimal_score, optimal_split = splitter.split(sequence, SimpleScorer)
 
-    assert optimal_split[1] == [0, 3]
-    assert optimal_split[0] == 9+3 - 1.5*(1/np.log(3+1)+1/np.log(3+1))
+    assert optimal_split == [0, 3]
+    assert optimal_score == 9+3 - 1.5*(1/np.log(3+1)+1/np.log(3+1))
 
     # limiting possible splits
     splitter = pasio.SquareSplitter(length_regularization_multiplier = 1.5,
                                     length_regularization_function = lambda x:1/np.log(1+x))
-    optimal_split = splitter.split(sequence,
-                                   SimpleScorer,
+    optimal_score, optimal_split = splitter.split(sequence, SimpleScorer,
                                    split_candidates = np.array([0,4,5]))
 
-    assert optimal_split[1] == [0, 4]
-    assert optimal_split[0] == 4+4 - 1.5*(1/np.log(4+1)+1/np.log(2+1))
+    assert optimal_split == [0, 4]
+    assert optimal_score == 4+4 - 1.5*(1/np.log(4+1)+1/np.log(2+1))
 
 def test_approximate_log_gamma():
     tol = 1e-8
@@ -282,18 +275,18 @@ def test_bedgraph_reader(tmpdir):
 def test_split_into_segments_slidingwindow():
     A = 'AAAAAAAAAAAAAAAA'
     B = 'BBBBBBBBBBBBBBBBB'
-    sequence = A+B
+    sequence = A + B
     splitter = pasio.SlidingWindowSplitter(window_size=10, window_shift=5,
                                            base_splitter=pasio.SquareSplitter())
-    splits = splitter.split(sequence, simple_scorer_factory)
-    assert splits[1] == [0, len(A)]
-    assert splits[0] == len(A)**2+len(B)**2
+    score, splits = splitter.split(sequence, simple_scorer_factory)
+    assert splits == [0, len(A)]
+    assert score == len(A)**2 + len(B)**2
 
     splitter = pasio.SlidingWindowSplitter(window_size=10, window_shift=5,
                                            base_splitter=pasio.SquareSplitter(split_number_regularization_multiplier=2))
-    splits = splitter.split(sequence, simple_scorer_factory)
-    assert splits[1] == [0, len(A)]
-    assert splits[0] == len(A)**2+len(B)**2-2
+    score, splits = splitter.split(sequence, simple_scorer_factory)
+    assert splits == [0, len(A)]
+    assert score == len(A)**2 + len(B)**2 - 2
 
 
 class SimpleGreedyScorer:
@@ -321,23 +314,23 @@ class SimpleGreedyScorer:
 simple_greedy_scorer_factory = lambda counts, split_candidates=None: SimpleGreedyScorer(counts, split_candidates)
 
 
-def test_not_constatnt_splitter():
+def test_not_constant_splitter():
     sequence = np.array([1,1,1,2,2,2,2])
     splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
-    splits = splitter.split(sequence, simple_scorer_factory)
-    assert splits[1] == [0, 3]
+    score, splits = splitter.split(sequence, simple_scorer_factory)
+    assert splits == [0, 3]
 
     splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
-    splits = splitter.split(sequence, simple_greedy_scorer_factory)
-    assert splits[1] == list(range(len(sequence)))
+    score, splits = splitter.split(sequence, simple_greedy_scorer_factory)
+    assert splits == list(range(len(sequence)))
 
     splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
-    splits = splitter.split(sequence, simple_greedy_scorer_factory)
-    assert splits[1] == [0, 3]
+    score, splits = splitter.split(sequence, simple_greedy_scorer_factory)
+    assert splits == [0, 3]
 
     splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
-    splits = splitter.split(sequence, simple_greedy_scorer_factory, np.array(range(len(sequence)-1)))
-    assert splits[1] == [0, 3]
+    score, splits = splitter.split(sequence, simple_greedy_scorer_factory, np.array(range(len(sequence)-1)))
+    assert splits == [0, 3]
 
     splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
     assert np.allclose(np.array([0, 3]),
