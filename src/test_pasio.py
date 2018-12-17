@@ -69,7 +69,7 @@ class SimpleScorer:
         if split_candidates is None:
             split_candidates = range(len(self.sequence)+1)
         self.split_candidates = split_candidates
-        self.constant = 0
+        self.segment_creation_cost = 0
 
     def score(self, start=0, stop=None):
         return self.self_score(start, stop)
@@ -302,7 +302,7 @@ class SimpleGreedyScorer:
         if split_candidates is None:
             split_candidates = range(len(self.sequence)+1)
         self.split_candidates = split_candidates
-        self.constant = 0
+        self.segment_creation_cost = 0
 
     def score(self, start=0, stop=None):
         return self.self_score(start, stop)

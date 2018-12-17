@@ -87,7 +87,7 @@ class LogMarginalLikelyhoodComputer:
         self.cumsum = np.hstack([0, np.cumsum(counts)])[self.split_candidates]
         self.logfac_cumsum = np.hstack([0, np.cumsum(log_gamma_computer.compute_for_array(counts + 1))])[self.split_candidates]
 
-        self.constant = alpha * log_computer.compute_for_number(beta) - log_gamma_computer.compute_for_number(alpha)
+        self.segment_creation_cost = alpha * log_computer.compute_for_number(beta) - log_gamma_computer.compute_for_number(alpha)
 
     def segment_sum_logfac(self, start=None, stop=None):
         if start is None:
@@ -110,11 +110,11 @@ class LogMarginalLikelyhoodComputer:
         add = log_gamma_computer.compute_for_array(shifted_segment_counts)
         sub = shifted_segment_counts * log_computer.compute_for_array(shifted_segment_lengths)
         self_scores = add - sub
-        scores = self_scores + self.constant
+        scores = self_scores + self.segment_creation_cost
         return scores - segment_sum_logfacs
 
     def score(self, start=None, stop=None):
-        return self.self_score(start, stop) + self.constant
+        return self.self_score(start, stop) + self.segment_creation_cost
 
     def self_score(self, start=None, stop=None):
         if start is None:
@@ -218,7 +218,7 @@ class SquareSplitter:
             right_borders[i] = right_border
             if right_border != 0:
                 num_splits[i] = num_splits[right_border] + 1
-            split_scores[i] = score_if_split_at_[right_border] + score_computer.constant
+            split_scores[i] = score_if_split_at_[right_border] + score_computer.segment_creation_cost
 
         splits = [split_candidates[i] for i in collect_split_points(right_borders[1:])]
         return split_scores[-1], splits
@@ -235,7 +235,7 @@ class SquareSplitter:
             score_if_split_at_ += split_scores[:i]
             right_border = np.argmax(score_if_split_at_)
             right_borders[i] = right_border
-            split_scores[i] = score_if_split_at_[right_border] + score_computer.constant
+            split_scores[i] = score_if_split_at_[right_border] + score_computer.segment_creation_cost
         splits = [split_candidates[i] for i in collect_split_points(right_borders[1:])]
         return split_scores[-1], splits
 
@@ -306,45 +306,45 @@ class RoundSplitter:
         self.base_splitter = base_splitter
 
     # Single round of candidate list reduction
-    def reduce_candidate_list(self, possible_split_points, counts, scorer_factory, round):
-        new_split_points_set = set([0])
-        for start_index in range(0, len(possible_split_points) - 1, self.window_shift):
-            stop_index = min(start_index + self.window_size, len(possible_split_points) - 1)
-            completion = float(start_index) / len(possible_split_points)
-            start = possible_split_points[start_index]
-            stop = possible_split_points[stop_index]
-            possible_split_points_in_window = possible_split_points[start_index:stop_index]
-            num_splits = len(possible_split_points_in_window)
+    def reduce_candidate_list(self, split_candidates, counts, scorer_factory, round):
+        new_split_candidates_set = set([0])
+        for start_index in range(0, len(split_candidates) - 1, self.window_shift):
+            stop_index = min(start_index + self.window_size, len(split_candidates) - 1)
+            completion = float(start_index) / len(split_candidates)
+            start = split_candidates[start_index]
+            stop = split_candidates[stop_index]
+            split_candidates_in_window = split_candidates[start_index:stop_index]
+            num_splits = len(split_candidates_in_window)
             logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %% of round complete)' % (
                 round, start, stop, num_splits, completion*100))
-            segment_split_candidates = np.array([p - start for p in possible_split_points_in_window])
+            segment_split_candidates = np.array([p - start for p in split_candidates_in_window])
             segment_score, segment_split_points = self.base_splitter.split(
                 counts[start:stop], scorer_factory,
                 split_candidates = segment_split_candidates
             )
-            new_split_points_set.update([start + s for s in segment_split_points])
+            new_split_candidates_set.update([start + s for s in segment_split_points])
         # last possible split point is the last point
-        new_split_points_set.add(len(counts))
-        return np.array(sorted(new_split_points_set))
+        new_split_candidates_set.add(len(counts))
+        return np.array(sorted(new_split_candidates_set))
 
     def split(self, counts, scorer_factory):
-        possible_split_points = np.arange(len(counts)+1)
+        split_candidates = np.arange(len(counts)+1)
         if self.num_rounds is None:
             num_rounds = len(counts)
         else:
             num_rounds = self.num_rounds
         for round_ in range(num_rounds):
-            logger.info('Starting split round %d, num_candidates %d' % (round_, len(possible_split_points)))
-            new_split_points = self.reduce_candidate_list(possible_split_points, counts, scorer_factory, round_)
-            if np.array_equal(new_split_points, possible_split_points):
+            logger.info('Starting split round %d, num_candidates %d' % (round_, len(split_candidates)))
+            new_split_candidates = self.reduce_candidate_list(split_candidates, counts, scorer_factory, round_)
+            if np.array_equal(new_split_candidates, split_candidates):
                 logger.info('Round:%d No split points removed. Finishing round' % round_)
                 # So no split points removed
                 break
-            assert len(new_split_points) < len(possible_split_points)
-            possible_split_points = new_split_points
+            assert len(new_split_candidates) < len(split_candidates)
+            split_candidates = new_split_candidates
 
         # the last point is the point (end+1). We don't use this point in final result
-        resulting_splits = new_split_points[:-1]
+        resulting_splits = new_split_candidates[:-1]
         final_score = compute_score_from_splits(counts, resulting_splits, scorer_factory)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
