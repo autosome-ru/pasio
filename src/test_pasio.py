@@ -50,17 +50,17 @@ def test_log_marginal_likelyhood_exact():
                 math.gamma(alpha) * counts_facproduct * ((ns+beta)**(cs+alpha))
             )
         )
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0]), 3, 5, None)
-    assert np.allclose(scorer.log_marginal_likelyhood(), exact_function(np.array([0]), 3, 5))
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0]), 3, 5, split_candidates=[0,1])
+    assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([0]), 3, 5))
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0, 1]), 3, 5, None)
-    assert np.allclose(scorer.log_marginal_likelyhood(), exact_function(np.array([0, 1]), 3, 5))
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0, 1]), 3, 5, split_candidates=[0,2])
+    assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([0, 1]), 3, 5))
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 5, 2, None)
-    assert np.allclose(scorer.log_marginal_likelyhood(), exact_function(np.array([4, 0, 1, 3]), 5, 2))
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 5, 2, split_candidates=[0,4])
+    assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([4, 0, 1, 3]), 5, 2))
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 1, 1, None)
-    assert np.allclose(scorer.log_marginal_likelyhood(), exact_function(np.array([4, 0, 1, 3]), 1, 1))
+    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 1, 1, split_candidates=[0,4])
+    assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([4, 0, 1, 3]), 1, 1))
 
 
 class SimpleScorer:
