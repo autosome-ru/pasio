@@ -248,11 +248,11 @@ def compute_log_marginal_likelyhood2(scorer, length):
 
 
 def test_collect_split_points():
-    assert pasio.collect_split_points([0,0,0]) == [0]
-    assert pasio.collect_split_points([0,1,2,3,4]) == [0,1,2,3,4]
-    assert pasio.collect_split_points([0,0,0,0,2,3,4]) == [0,4]
-    assert pasio.collect_split_points([0,0,2,1,4]) == [0,1,4]
-    assert pasio.collect_split_points([0,0,2,1,3]) == [0,2,3]
+    assert pasio.SquareSplitter.collect_split_points([0,0,0]) == [0]
+    assert pasio.SquareSplitter.collect_split_points([0,1,2,3,4]) == [0,1,2,3,4]
+    assert pasio.SquareSplitter.collect_split_points([0,0,0,0,2,3,4]) == [0,4]
+    assert pasio.SquareSplitter.collect_split_points([0,0,2,1,4]) == [0,1,4]
+    assert pasio.SquareSplitter.collect_split_points([0,0,2,1,3]) == [0,2,3]
 
 def test_bedgraph_reader(tmpdir):
     bedgraph_file = tmpdir.mkdir("sub").join("test.bedgraph")

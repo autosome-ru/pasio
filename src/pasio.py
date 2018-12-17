@@ -80,7 +80,7 @@ class LogMarginalLikelyhoodComputer:
         self.alpha = alpha
         self.beta = beta
         if split_candidates is None:
-            self.split_candidates = np.arange(len(counts)+1)
+            self.split_candidates = np.arange(len(counts) + 1)
         else:
             assert split_candidates[0] == 0
             self.split_candidates = split_candidates
@@ -154,14 +154,6 @@ def compute_score_from_splits(counts, splits, scorer_factory):
     sum_scores += scorer.score(start = splits[-1])
     return sum_scores
 
-def collect_split_points(right_borders):
-    split_point = right_borders[-1]
-    split_points_collected = [split_point]
-    while split_point != 0:
-        split_point -= 1
-        split_point = right_borders[split_point]
-        split_points_collected.append(split_point)
-    return split_points_collected[::-1]
 
 class SquareSplitter:
     def __init__(self,
@@ -176,7 +168,7 @@ class SquareSplitter:
 
     def normalize_split_candidates(self, counts, split_candidates = None):
         if split_candidates is None:
-            split_candidates = np.arange(len(counts)+1)
+            split_candidates = np.arange(len(counts) + 1)
         else:
             if split_candidates[-1] == len(counts):
                 split_candidates = np.array(split_candidates, dtype=int)
@@ -220,7 +212,7 @@ class SquareSplitter:
                 num_splits[i] = num_splits[right_border] + 1
             split_scores[i] = score_if_split_at_[right_border] + score_computer.segment_creation_cost
 
-        splits = [split_candidates[i] for i in collect_split_points(right_borders[1:])]
+        splits = [split_candidates[i] for i in SquareSplitter.collect_split_points(right_borders[1:])]
         return split_scores[-1], splits
 
     def split_without_normalizations(self, counts, scorer_factory, split_candidates):
@@ -236,9 +228,18 @@ class SquareSplitter:
             right_border = np.argmax(score_if_split_at_)
             right_borders[i] = right_border
             split_scores[i] = score_if_split_at_[right_border] + score_computer.segment_creation_cost
-        splits = [split_candidates[i] for i in collect_split_points(right_borders[1:])]
+        splits = [split_candidates[i] for i in SquareSplitter.collect_split_points(right_borders[1:])]
         return split_scores[-1], splits
 
+    @staticmethod
+    def collect_split_points(right_borders):
+        split_point = right_borders[-1]
+        split_points_collected = [split_point]
+        while split_point != 0:
+            split_point -= 1
+            split_point = right_borders[split_point]
+            split_points_collected.append(split_point)
+        return split_points_collected[::-1]
 
 class NotZeroSplitter:
     def __init__(self, base_splitter):
@@ -328,7 +329,7 @@ class RoundSplitter:
         return np.array(sorted(new_split_candidates_set))
 
     def split(self, counts, scorer_factory):
-        split_candidates = np.arange(len(counts)+1)
+        split_candidates = np.arange(len(counts) + 1)
         if self.num_rounds is None:
             num_rounds = len(counts)
         else:
@@ -455,8 +456,8 @@ if __name__ == '__main__':
         counts, args.alpha, args.beta, split_candidates = split_candidates)
 
     length_regularization_functions = {
-         'none': lambda x:x
-        ,'revlog': lambda x:1/np.log(x+1)
+        'none': lambda x: x,
+        'revlog': lambda x: 1 / np.log(x + 1),
     }
     length_regularization_function = length_regularization_functions[args.length_regularization_function]
     length_regularization_multiplier = args.length_regularization
@@ -497,4 +498,3 @@ if __name__ == '__main__':
 
     logger.info('Starting Pasio with args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, splitter)
-
