@@ -146,13 +146,12 @@ class LogMarginalLikelyhoodComputer:
 
         return add_vec - sub_vec
 
-def compute_score_from_splits(counts, splits, scorer_factory):
-    scorer = scorer_factory(counts)
-    sum_scores = 0
-    for start, stop in zip(splits, splits[1:]):
-        sum_scores += scorer.score(start, stop)
-    sum_scores += scorer.score(start = splits[-1])
-    return sum_scores
+    def compute_score_from_splits(self, splits):
+        sum_scores = 0
+        for start, stop in zip(splits, splits[1:]):
+            sum_scores += self.score(start, stop)
+        sum_scores += self.score(start = splits[-1])
+        return sum_scores
 
 
 class SquareSplitter:
@@ -346,7 +345,7 @@ class RoundSplitter:
 
         # the last point is the point (end+1). We don't use this point in final result
         resulting_splits = new_split_candidates[:-1]
-        final_score = compute_score_from_splits(counts, resulting_splits, scorer_factory)
+        final_score = scorer_factory(counts).compute_score_from_splits(resulting_splits)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
                                                                                              final_score,

@@ -32,9 +32,7 @@ def test_stat_split_into_segments_square():
 
         assert optimal_score >= two_split_score
         assert two_split_point in optimal_split
-        assert np.allclose(optimal_score,
-                           pasio.compute_score_from_splits(
-                               counts, optimal_split, scorer_factory))
+        assert np.allclose(optimal_score, scorer_factory(counts).compute_score_from_splits(optimal_split))
         if (two_split_point is None):
             assert optimal_split == [0,200]
         else:
