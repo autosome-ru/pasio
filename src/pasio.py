@@ -109,22 +109,19 @@ class LogMarginalLikelyhoodComputer:
     def total_sum_logfac(self):
         return self.logfac_cumsum[-1]
 
-    def log_marginal_likelyhoods(self):
-        starts = np.arange(0, len(self.split_candidates) - 1, dtype=int)
-        stops = np.arange(1, len(self.split_candidates), dtype=int)
-        split_candidates = np.array(self.split_candidates)
-        segment_lengths = split_candidates[stops] - split_candidates[starts]
-
-        segment_sum_logfacs = self.logfac_cumsum[stops] - self.logfac_cumsum[starts]
-        segment_counts = self.cumsum[stops] - self.cumsum[starts]
+    def scores(self):
+        segment_lengths = np.diff(self.split_candidates)
+        segment_counts = np.diff(self.cumsum)
         shifted_segment_counts = segment_counts + self.alpha
         shifted_segment_lengths = segment_lengths + self.beta
         add = log_gamma_computer.compute_for_array(shifted_segment_counts)
         sub = shifted_segment_counts * log_computer.compute_for_array(shifted_segment_lengths)
         self_scores = add - sub
-        scores = self_scores + self.segment_creation_cost
-        return scores - segment_sum_logfacs
+        return self_scores + self.segment_creation_cost
 
+    def log_marginal_likelyhoods(self):
+        segment_sum_logfacs = np.diff(self.logfac_cumsum)
+        return self.scores() - segment_sum_logfacs
 
     def score(self, start, stop):
         return self.self_score(start, stop) + self.segment_creation_cost
@@ -159,12 +156,6 @@ class LogMarginalLikelyhoodComputer:
         sub_vec = shifted_segment_count_vec * log_computer.compute_for_array(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
 
         return add_vec - sub_vec
-
-    def compute_score_from_splits(self, splits):
-        sum_scores = 0
-        for start, stop in zip(splits, splits[1:]):
-            sum_scores += self.score(start, stop)
-        return sum_scores
 
 class SquareSplitter:
     def __init__(self,
@@ -376,7 +367,8 @@ class RoundSplitter:
             assert len(new_split_candidates) < len(split_candidates)
             split_candidates = new_split_candidates
 
-        final_score = scorer_factory(counts).compute_score_from_splits(new_split_candidates)
+        scores = scorer_factory(counts, new_split_candidates).scores()
+        final_score = np.sum(scores)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
                                                                                              final_score,
