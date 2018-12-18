@@ -82,9 +82,7 @@ def assert_correct_split_candidates(split_candidates, counts):
 
 # Indexing of LogMarginalLikelyhoodComputer iterates over split candidates, not counts
 class LogMarginalLikelyhoodComputer:
-    def __init__(self, counts, alpha, beta, split_candidates=None):
-        assert_correct_counts(counts)
-        self.counts = counts
+    def __init__(self, counts, alpha, beta, split_candidates):
 
         assert isinstance(alpha, int)
         assert isinstance(beta, int)
@@ -93,16 +91,16 @@ class LogMarginalLikelyhoodComputer:
         self.alpha = alpha
         self.beta = beta
 
-        if split_candidates is None:
-            self.split_candidates = np.arange(len(counts) + 1)
-        else:
-            assert_correct_split_candidates(split_candidates, counts)
-            self.split_candidates = split_candidates
+        assert_correct_counts(counts)
+        self.counts = counts
 
-        self.cumsum = np.hstack([0, np.cumsum(counts)])[self.split_candidates]
+        assert_correct_split_candidates(split_candidates, counts)
+        self.split_candidates = split_candidates
+
+        self.cumsum = np.hstack([0, np.cumsum(counts)])[split_candidates]
 
         count_logfacs = log_gamma_computer.compute_for_array(counts + 1)
-        self.logfac_cumsum = np.hstack([0, np.cumsum(count_logfacs)])[self.split_candidates]
+        self.logfac_cumsum = np.hstack([0, np.cumsum(count_logfacs)])[split_candidates]
 
         self.segment_creation_cost = alpha * log_computer.compute_for_number(beta) - log_gamma_computer.compute_for_number(alpha)
 
@@ -183,7 +181,7 @@ class SquareSplitter:
             return self.split_with_normalizations(counts, scorer_factory, split_candidates)
 
     def split_with_normalizations(self, counts, scorer_factory, split_candidates):
-        score_computer = scorer_factory(counts, split_candidates=split_candidates)
+        score_computer = scorer_factory(counts, split_candidates)
         num_split_candidates = len(split_candidates)
 
         prefix_scores = np.empty(num_split_candidates)
@@ -221,7 +219,7 @@ class SquareSplitter:
         return prefix_scores[-1], split_positions
 
     def split_without_normalizations(self, counts, scorer_factory, split_candidates):
-        score_computer = scorer_factory(counts, split_candidates=split_candidates)
+        score_computer = scorer_factory(counts, split_candidates)
         num_split_candidates = len(split_candidates)
 
         # prefix_scores[i] is the best score of prefix [0; i)
@@ -367,13 +365,14 @@ class RoundSplitter:
             assert len(new_split_candidates) < len(split_candidates)
             split_candidates = new_split_candidates
 
-        scores = scorer_factory(counts, new_split_candidates).scores()
+        resulting_splits = new_split_candidates
+        scores = scorer_factory(counts, resulting_splits).scores()
         final_score = np.sum(scores)
 
         logger.info('Splitting finished in %d rounds. Score %f Number of split points %d' % (round_,
                                                                                              final_score,
-                                                                                             len(new_split_candidates)))
-        return (final_score, new_split_candidates)
+                                                                                             len(resulting_splits)))
+        return (final_score, resulting_splits)
 
 
 def parse_bedgraph(filename):
@@ -406,7 +405,7 @@ def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
             score, splits = splitter.split(counts, scorer_factory)
-            scorer = scorer_factory(counts, split_candidates = splits)
+            scorer = scorer_factory(counts, splits)
             sum_logfac = scorer.total_sum_logfac()
             log_likelyhood = score - sum_logfac
             logger.info('chrom %s finished, score %f, number of splits %d. '
@@ -474,8 +473,8 @@ if __name__ == '__main__':
             sys.exit('Argument --window_shift is required for algorithms slidingwingow and rounds')
         if args.window_size is None:
             sys.exit('Argument --window_size is required for algorithms slidingwingow and rounds')
-    scorer_factory = lambda counts, split_candidates=None: LogMarginalLikelyhoodComputer(
-        counts, args.alpha, args.beta, split_candidates = split_candidates)
+    scorer_factory = lambda counts, split_candidates: LogMarginalLikelyhoodComputer(
+        counts, args.alpha, args.beta, split_candidates)
 
     length_regularization_functions = {
         'none': lambda x: x,
