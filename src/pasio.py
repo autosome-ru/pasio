@@ -166,15 +166,7 @@ class SquareSplitter:
         self.length_regularization_function = length_regularization_function
         self.split_number_regularization_function = split_number_regularization_function
 
-    def normalize_split_candidates(self, counts, split_candidates = None):
-        if split_candidates is None:
-            return np.arange(len(counts) + 1)
-        else:
-            assert_correct_split_candidates(split_candidates, counts)
-            return split_candidates
-
-    def split(self, counts, scorer_factory, split_candidates=None):
-        split_candidates = self.normalize_split_candidates(counts, split_candidates)
+    def split(self, counts, scorer_factory, split_candidates):
         if self.split_number_regularization_multiplier == 0 and self.length_regularization_multiplier == 0:
             return self.split_without_normalizations(counts, scorer_factory, split_candidates)
         else:
@@ -267,41 +259,32 @@ class NotZeroSplitter:
     def __init__(self, base_splitter):
         self.base_splitter = base_splitter
 
-    def split(self, counts, scorer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates):
         if np.all(counts == 0):
             logger.info('Window contains just zeros. Skipping.')
             scorer = scorer_factory(counts, split_candidates)
             return scorer.score_no_splits(), np.array([0, len(counts)])
         logger.info('Not zeros. Spliting.')
-        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, scorer_factory, split_candidates)
 
 
 class NotConstantSplitter:
     def __init__(self, base_splitter):
         self.base_splitter = base_splitter
 
-    def get_non_constant_split_candidates(self, counts, split_candidates=None):
-        if split_candidates is None:
-            # ------left_to_border|right_to_border------
-            (left_to_border_positions, ) = np.where( counts[:-1] != counts[1:] )
-            if len(left_to_border_positions) == 0:
-                return np.array([0, len(counts)])
-            # split positions are to the right from the border
-            nonconstant_split_positions = left_to_border_positions + 1
-        else:
-            # The first and the last points should always be in resulting list of candidates
-            # We add them manually
-            split_candidates = split_candidates[1:-1]
-            # for each split candidate in the middle of a studied region we test
-            # if its count differs from adjacent point (from the left side)
-            different_from_previous = counts[split_candidates - 1] != counts[split_candidates]
-            # and retain only these points
-            nonconstant_split_positions = split_candidates[different_from_previous]
+    def get_non_constant_split_candidates(self, counts, split_candidates):
+        # The first and the last points should always be in resulting list of candidates. We will add them manually
+        split_candidates = split_candidates[1:-1]
+        # for each split candidate in the middle of a studied region we test
+        # if its count differs from adjacent point (from the left side)
+        different_from_previous = counts[split_candidates - 1] != counts[split_candidates]
+        # and retain only these points
+        nonconstant_split_positions = split_candidates[different_from_previous]
         return np.hstack([0, nonconstant_split_positions, len(counts)])
 
-    def split(self, counts, scorer_factory, split_candidates=None):
+    def split(self, counts, scorer_factory, split_candidates):
         split_candidates = self.get_non_constant_split_candidates(counts, split_candidates)
-        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
+        return self.base_splitter.split(counts, scorer_factory, split_candidates)
 
 
 class SlidingWindowSplitter:
@@ -310,16 +293,19 @@ class SlidingWindowSplitter:
         self.window_shift = window_shift
         self.base_splitter = base_splitter
 
-    def split(self, counts, scorer_factory):
-        split_candidates_set = set([0, len(counts)])
+    # Note that split candidates parameter is not used here
+    def split(self, counts, scorer_factory, _unused_split_candidates):
+        new_split_candidates_set = set([0, len(counts)])
         for start in range(0, len(counts), self.window_shift):
             logger.info('Processing window at start:%d (%.2f %s of chrom)' % (start, 100*start/float(len(counts)), '%'))
             stop = min(start + self.window_size, len(counts))
-            segment_score, segment_split_points = self.base_splitter.split(counts[start:stop], scorer_factory)
-            split_candidates_set.update([start + s for s in segment_split_points])
-        logger.info('Final split of chromosome with %d split points' % len(split_candidates_set))
-        split_candidates = np.array(sorted(split_candidates_set))
-        return self.base_splitter.split(counts, scorer_factory, split_candidates=split_candidates)
+            counts_in_window = counts[start:stop]
+            split_candidates_in_window = np.arange(len(counts_in_window) + 1)
+            segment_score, segment_split_points = self.base_splitter.split(counts_in_window, scorer_factory, split_candidates_in_window)
+            new_split_candidates_set.update([start + s for s in segment_split_points])
+        logger.info('Final split of chromosome with %d split points' % len(new_split_candidates_set))
+        split_candidates = np.array(sorted(new_split_candidates_set))
+        return self.base_splitter.split(counts, scorer_factory, split_candidates)
 
 
 class RoundSplitter:
@@ -343,18 +329,16 @@ class RoundSplitter:
                 round, start, stop, num_splits, completion*100))
             segment_split_candidates = np.array([p - start for p in split_candidates_in_window])
             segment_score, segment_split_points = self.base_splitter.split(
-                counts[start:stop], scorer_factory,
-                split_candidates = segment_split_candidates
-            )
+                counts[start:stop], scorer_factory, segment_split_candidates)
             new_split_candidates_set.update([start + s for s in segment_split_points])
         return np.array(sorted(new_split_candidates_set))
 
-    def split(self, counts, scorer_factory):
-        split_candidates = np.arange(len(counts) + 1)
+    def split(self, counts, scorer_factory, split_candidates):
         if self.num_rounds is None:
             num_rounds = len(counts)
         else:
             num_rounds = self.num_rounds
+
         for round_ in range(num_rounds):
             logger.info('Starting split round %d, num_candidates %d' % (round_, len(split_candidates)))
             new_split_candidates = self.reduce_candidate_list(split_candidates, counts, scorer_factory, round_)
@@ -404,7 +388,8 @@ def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
-            score, splits = splitter.split(counts, scorer_factory)
+            split_candidates = np.arange(len(counts) + 1)
+            score, splits = splitter.split(counts, scorer_factory, split_candidates)
             scorer = scorer_factory(counts, splits)
             sum_logfac = scorer.total_sum_logfac()
             log_likelyhood = score - sum_logfac
