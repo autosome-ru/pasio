@@ -318,5 +318,7 @@ def test_not_constant_splitter():
     score, splits = splitter.split(sequence, simple_greedy_scorer_factory, np.array([0,1,2,3,4,5,7]))
     assert np.array_equal(splits, [0, 3, 7])
 
-    splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
-    assert np.array_equal(splitter.get_non_constant_split_candidates(sequence, np.array([0, 3, 7])), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.array([0, 3, 7])), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.arange(8)), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.array([0, 3, 5, 7])), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.array([0, 5, 7])), [0, 7])

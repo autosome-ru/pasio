@@ -272,19 +272,19 @@ class NotConstantSplitter:
     def __init__(self, base_splitter):
         self.base_splitter = base_splitter
 
-    def get_non_constant_split_candidates(self, counts, split_candidates):
-        # The first and the last points should always be in resulting list of candidates. We will add them manually
-        split_candidates = split_candidates[1:-1]
-        # for each split candidate in the middle of a studied region we test
-        # if its count differs from adjacent point (from the left side)
-        different_from_previous = counts[split_candidates - 1] != counts[split_candidates]
-        # and retain only these points
-        nonconstant_split_positions = split_candidates[different_from_previous]
+    @staticmethod
+    def get_non_constant_split_candidates(counts, split_candidates):
+        # ------left_to_border|right_to_border------
+        (left_to_border_positions, ) = np.where( counts[:-1] != counts[1:] )
+        points_of_count_change = 1 + left_to_border_positions
+        nonconstant_split_positions = np.intersect1d(split_candidates, points_of_count_change, assume_unique=True)
         return np.hstack([0, nonconstant_split_positions, len(counts)])
 
     def split(self, counts, scorer_factory, split_candidates):
-        split_candidates = self.get_non_constant_split_candidates(counts, split_candidates)
-        return self.base_splitter.split(counts, scorer_factory, split_candidates)
+        new_split_candidates = NotConstantSplitter.get_non_constant_split_candidates(counts, split_candidates)
+        logger.info('Filter out splits in constant regions. Out of %d splits %d splits retained.' % (len(split_candidates),
+                                                                                                    len(new_split_candidates)))
+        return self.base_splitter.split(counts, scorer_factory, new_split_candidates)
 
 
 class SlidingWindowSplitter:
