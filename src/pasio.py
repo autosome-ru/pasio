@@ -2,7 +2,6 @@ from __future__ import print_function, division
 from builtins import range
 import numpy as np
 import argparse
-import array
 import logging
 import sys
 import scipy.special
@@ -382,15 +381,15 @@ def parse_bedgraph(filename):
             coverage = int(coverage)
             if chrom != previous_chrom:
                 if previous_chrom is not None:
-                    # overwrite chromosome_data not to retain both array.array and np.array in memory
+                    # overwrite chromosome_data not to retain both list and np.array in memory
                     # and let the former be garbage collected
-                    chromosome_data = np.array(chromosome_data)
+                    chromosome_data = np.array(chromosome_data, dtype=int)
                     yield previous_chrom, chromosome_data, chromosome_start
-                chromosome_data = array.array('l')
+                chromosome_data = []
                 chromosome_start = start
             chromosome_data.extend([coverage]*(stop-start))
             previous_chrom = chrom
-        chromosome_data = np.array(chromosome_data)
+        chromosome_data = np.array(chromosome_data, dtype=int)
         yield chrom, chromosome_data, chromosome_start
 
 
