@@ -382,12 +382,16 @@ def parse_bedgraph(filename):
             coverage = int(coverage)
             if chrom != previous_chrom:
                 if previous_chrom is not None:
-                    yield previous_chrom, np.array(chromosome_data), chromosome_start
+                    # overwrite chromosome_data not to retain both array.array and np.array in memory
+                    # and let the former be garbage collected
+                    chromosome_data = np.array(chromosome_data)
+                    yield previous_chrom, chromosome_data, chromosome_start
                 chromosome_data = array.array('l')
                 chromosome_start = start
             chromosome_data.extend([coverage]*(stop-start))
             previous_chrom = chrom
-        yield chrom, np.array(chromosome_data), chromosome_start
+        chromosome_data = np.array(chromosome_data)
+        yield chrom, chromosome_data, chromosome_start
 
 
 def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
