@@ -487,20 +487,23 @@ if __name__ == '__main__':
         split_number_regularization_multiplier=split_number_regularization_multiplier,
         split_number_regularization_function=lambda x:x)
 
-    if args.no_split_constant:
-        square_splitter = NotConstantSplitter(base_splitter = square_splitter)
-
-    if args.algorithm == 'slidingwindow':
-        splitter = SlidingWindowSplitter(window_size=args.window_size,
-                                         window_shift=args.window_shift,
-                                         base_splitter=NotZeroSplitter(square_splitter))
-    elif args.algorithm == 'exact':
+    if args.algorithm == 'exact':
         splitter = square_splitter
-    elif args.algorithm == 'rounds':
-        splitter = RoundSplitter(window_size=args.window_size,
-                                 window_shift=args.window_shift,
-                                 base_splitter=NotZeroSplitter(square_splitter),
-                                 num_rounds=args.num_rounds)
+    else:
+        if args.no_split_constant:
+            square_splitter = NotConstantSplitter(base_splitter = square_splitter)
+        else:
+            square_splitter = NotZeroSplitter(square_splitter)
+
+        if args.algorithm == 'slidingwindow':
+            splitter = SlidingWindowSplitter(window_size=args.window_size,
+                                             window_shift=args.window_shift,
+                                             base_splitter=square_splitter)
+        elif args.algorithm == 'rounds':
+            splitter = RoundSplitter(window_size=args.window_size,
+                                     window_shift=args.window_shift,
+                                     base_splitter=square_splitter,
+                                     num_rounds=args.num_rounds)
 
     logger.info('Starting Pasio with args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, splitter)
