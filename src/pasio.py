@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division
 from builtins import range
 import numpy as np
 import argparse
@@ -122,6 +122,11 @@ class LogMarginalLikelyhoodComputer:
     def log_marginal_likelyhoods(self):
         segment_sum_logfacs = np.diff(self.logfac_cumsum)
         return self.scores() - segment_sum_logfacs
+
+    def mean_counts(self):
+        segment_lengths = np.diff(self.split_candidates)
+        segment_counts = np.diff(self.cumsum)
+        return segment_counts / segment_lengths
 
     def score(self, start, stop):
         return self.self_score(start, stop) + self.segment_creation_cost
@@ -398,11 +403,11 @@ def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
             logger.info('chrom %s finished, score %f, number of splits %d. '
                         'Log likelyhood: %f.'% (chrom, score, len(splits), log_likelyhood))
             logger.info('Starting output of chrom %s' % chrom)
-            for i, (start, stop, log_marginal_likelyhood) in enumerate(zip(splits, splits[1:], scorer.log_marginal_likelyhoods())):
+            for i, (start, stop, mean_count, log_marginal_likelyhood) in enumerate(zip(splits, splits[1:], scorer.mean_counts(), scorer.log_marginal_likelyhoods())):
                 outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
                                                             start+chrom_start,
                                                             stop+chrom_start,
-                                                            counts[start:stop].mean(),
+                                                            mean_count,
                                                             stop-start,
                                                             log_marginal_likelyhood))
 
