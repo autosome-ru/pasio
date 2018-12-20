@@ -268,7 +268,7 @@ class SquareSplitter:
 class NotZeroReducer:
     def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
         if np.all(counts == 0):
-            logger.info('Interval contains just zeros, reduce split candidates %d --> 2' % len(split_candidates))
+            logger.info('Interval contains just zeros, reduce number of split candidates %d --> 2' % len(split_candidates))
             return np.array([0, len(counts)])
         else:
             logger.info('Not zeros. Interval not reduced.')
@@ -281,7 +281,10 @@ class NotConstantReducer:
         (left_to_border_positions, ) = np.where( counts[:-1] != counts[1:] )
         points_of_count_change = 1 + left_to_border_positions
         nonconstant_split_positions = np.intersect1d(split_candidates, points_of_count_change, assume_unique=True)
-        return np.hstack([0, nonconstant_split_positions, len(counts)])
+        new_split_candidates = np.hstack([0, nonconstant_split_positions, len(counts)])
+        logger.info('Splits candidates in constant regions removed, reduce number of split candidates %d --> %d' % (len(split_candidates),
+                                                                                                                    len(new_split_candidates)))
+        return new_split_candidates
 
 class SlidingWindow:
     def __init__(self, window_size, window_shift):
@@ -292,51 +295,34 @@ class SlidingWindow:
         length = len(arr)
         for start in range(0, length, self.window_shift):
             stop = min(start + self.window_size + 1, length)
-            completion = start / length
+            completion = stop / length
             # start inclusive, stop exclusive
             yield (arr[start:stop], start, stop, completion)
 
-class SlidingWindowSplitter:
-    def __init__(self, window_size, window_shift, base_splitter):
-        self.sliding_window = SlidingWindow(window_size, window_shift)
-        self.base_splitter = base_splitter
-
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
-        score, splits = self.split(counts, scorer_factory, split_candidates)
-        return splits
-
-    # Note that split candidates parameter is not used here
-    def split(self, counts, scorer_factory, _unused_split_candidates):
-        new_split_candidates_set = set([0, len(counts)])
-        for (counts_in_window, start, stop, completion) in self.sliding_window.windows(counts):
-            logger.info('Processing window at start:%d (%.2f %% of chrom)' % (start, completion*100))
-            split_candidates_in_window = np.arange(len(counts_in_window) + 1)
-            segment_score, segment_split_points = self.base_splitter.split(counts_in_window, scorer_factory, split_candidates_in_window)
-            new_split_candidates_set.update(segment_split_points + start)
-        logger.info('Final split of chromosome with %d split points' % len(new_split_candidates_set))
-        split_candidates = np.array(sorted(new_split_candidates_set))
-        return self.base_splitter.split(counts, scorer_factory, split_candidates)
-
-class RoundSplitter:
-    def __init__(self, window_size, window_shift, base_splitter, num_rounds=None):
-        self.num_rounds = num_rounds
-        self.base_splitter = base_splitter
-        self.sliding_window = SlidingWindow(window_size, window_shift)
+class SlidingWindowReducer:
+    def __init__(self, sliding_window, base_reducer):
+        self.sliding_window = sliding_window
+        self.base_reducer = base_reducer
 
     # Single round of candidate list reduction
-    def reduce_candidate_list_single_round(self, split_candidates, counts, scorer_factory, round):
+    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
         new_split_candidates_set = set([0, len(counts)])
         for (split_candidates_in_window, _start_index, _stop_index, completion) in self.sliding_window.windows(split_candidates):
             start = split_candidates_in_window[0]
             stop  = split_candidates_in_window[-1]
-            num_splits = len(split_candidates_in_window)
-            logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %% of round complete)' % (
-                round, start, stop, num_splits, completion*100))
-            segment_split_candidates = split_candidates_in_window - start
-            segment_score, segment_split_points = self.base_splitter.split(
-                counts[start:stop], scorer_factory, segment_split_candidates)
-            new_split_candidates_set.update(segment_split_points + start)
+
+            splits_relative_pos = split_candidates_in_window - start
+            reduced_splits_relative_pos = self.base_reducer.reduce_candidate_list(
+                counts[start:stop], scorer_factory, splits_relative_pos)
+            new_split_candidates_set.update(reduced_splits_relative_pos + start)
+            logger.info('Reduced split candidates in window [%d, %d) (%.2f %% of round complete): %d --> %d split-points' % (
+                start, stop, completion*100, len(split_candidates_in_window), len(reduced_splits_relative_pos)))
         return np.array(sorted(new_split_candidates_set))
+
+class RoundReducer:
+    def __init__(self, base_reducer, num_rounds=None):
+        self.base_reducer = base_reducer
+        self.num_rounds = num_rounds
 
     def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
         if self.num_rounds is None:
@@ -346,7 +332,7 @@ class RoundSplitter:
 
         for round_ in range(1, num_rounds + 1):
             logger.info('Starting split round %d, num_candidates %d' % (round_, len(split_candidates)))
-            new_split_candidates = self.reduce_candidate_list_single_round(split_candidates, counts, scorer_factory, round_)
+            new_split_candidates = self.base_reducer.reduce_candidate_list(counts, scorer_factory, split_candidates)
             if np.array_equal(new_split_candidates, split_candidates):
                 logger.info('Round:%d No split points removed. Finishing round' % round_)
                 return new_split_candidates
@@ -355,12 +341,16 @@ class RoundSplitter:
         logger.info('Splitting finished in %d rounds. Number of split points %d' % (round_, len(new_split_candidates)))
         return new_split_candidates
 
-    def split(self, counts, scorer_factory, split_candidates):
-        resulting_splits = self.reduce_candidate_list(counts, scorer_factory, split_candidates)
-        scores = scorer_factory(counts, resulting_splits).scores()
-        final_score = np.sum(scores)
-        return (final_score, resulting_splits)
+# Doesn't change list of split candidates. But for a given list of split candidates it can calculate score
+# Designed to make it possible to convert reducer into splitter with `SpliiterCombiner(reducer, NopSplitter())`
+class NopSplitter:
+    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+        return split_candidates
 
+    def split(self, counts, scorer_factory, split_candidates):
+        scores = scorer_factory(counts, split_candidates).scores()
+        final_score = np.sum(scores)
+        return (final_score, split_candidates)
 
 class ReducerCombiner:
     def __init__(self, *reducers):
@@ -527,14 +517,14 @@ if __name__ == '__main__':
             square_splitter = SplitterCombiner(NotZeroReducer(), square_splitter)
 
         if args.algorithm == 'slidingwindow':
-            splitter = SlidingWindowSplitter(window_size=args.window_size,
-                                             window_shift=args.window_shift,
-                                             base_splitter=square_splitter)
+            sliding_window = SlidingWindow(window_size = args.window_size, window_shift = args.window_shift)
+            reducer = SlidingWindowReducer(sliding_window = sliding_window, base_reducer = square_splitter)
+            splitter = SplitterCombiner(reducer, square_splitter)
         elif args.algorithm == 'rounds':
-            splitter = RoundSplitter(window_size=args.window_size,
-                                     window_shift=args.window_shift,
-                                     base_splitter=square_splitter,
-                                     num_rounds=args.num_rounds)
+            sliding_window = SlidingWindow(window_size = args.window_size, window_shift = args.window_shift)
+            base_reducer = SlidingWindowReducer(sliding_window = sliding_window, base_reducer = square_splitter)
+            reducer = RoundReducer(base_reducer = base_reducer, num_rounds = args.num_rounds)
+            splitter = SplitterCombiner(reducer, NopSplitter())
 
     logger.info('Starting Pasio with args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, splitter)

@@ -267,14 +267,18 @@ def test_split_into_segments_slidingwindow():
     A = 'AAAAAAAAAAAAAAAA'
     B = 'BBBBBBBBBBBBBBBBB'
     sequence = A + B
-    splitter = pasio.SlidingWindowSplitter(window_size=10, window_shift=5,
-                                           base_splitter=pasio.SquareSplitter())
+    sliding_window = pasio.SlidingWindow(window_size=10, window_shift=5)
+
+    base_splitter = pasio.SquareSplitter()
+    sliding_window_reducer = pasio.SlidingWindowReducer(sliding_window, base_reducer=base_splitter)
+    splitter = pasio.SplitterCombiner(sliding_window_reducer, base_splitter)
     score, splits = splitter.split(sequence, simple_scorer_factory, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, len(A), len(sequence)])
     assert score == len(A)**2+len(B)**2
 
-    splitter = pasio.SlidingWindowSplitter(window_size=10, window_shift=5,
-                                           base_splitter=pasio.SquareSplitter(split_number_regularization_multiplier=2))
+    base_splitter = pasio.SquareSplitter(split_number_regularization_multiplier=2)
+    sliding_window_reducer = pasio.SlidingWindowReducer(sliding_window, base_reducer=base_splitter)
+    splitter = pasio.SplitterCombiner(sliding_window_reducer, base_splitter)
     score, splits = splitter.split(sequence, simple_scorer_factory, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, len(A), len(sequence)])
     assert score == len(A)**2 + len(B)**2 - 2
