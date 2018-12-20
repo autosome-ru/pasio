@@ -14,6 +14,26 @@ stderr.setFormatter(formatter)
 logger.addHandler(stderr)
 logger.setLevel(logging.INFO)
 
+class LoggingContextFilter:
+    def __init__(self):
+        self.context = {}
+
+    def put_to_context(self, key, value):
+        self.context[key] = value
+
+    def remove_from_context(self, key):
+        del self.context[key]
+
+    def filter(self, record):
+        if 'window' in self.context:
+            record.msg = 'Window %s: %s' % (self.context['window'], record.msg)
+        if 'round' in self.context:
+            record.msg = 'Round %d: %s' % (self.context['round'], record.msg)
+        return True
+
+logging_filter = LoggingContextFilter()
+logger.addFilter(logging_filter)
+
 # Works only with non-negative integer values
 class LogComputer:
     def __init__(self, cache_size = 1048576):
@@ -268,7 +288,7 @@ class SquareSplitter:
 class NotZeroReducer:
     def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
         if np.all(counts == 0):
-            logger.info('Interval contains just zeros, reduce number of split candidates %d --> 2' % len(split_candidates))
+            logger.info('Just zeros: %d --> 2 split points' % len(split_candidates))
             return np.array([0, len(counts)])
         else:
             logger.info('Not zeros. Interval not reduced.')
@@ -282,8 +302,7 @@ class NotConstantReducer:
         points_of_count_change = 1 + left_to_border_positions
         nonconstant_split_positions = np.intersect1d(split_candidates, points_of_count_change, assume_unique=True)
         new_split_candidates = np.hstack([0, nonconstant_split_positions, len(counts)])
-        logger.info('Splits candidates in constant regions removed, reduce number of split candidates %d --> %d' % (len(split_candidates),
-                                                                                                                    len(new_split_candidates)))
+        logger.info('Constants reduced: %d --> %d split points' % (len(split_candidates), len(new_split_candidates)))
         return new_split_candidates
 
 class SlidingWindow:
@@ -310,13 +329,15 @@ class SlidingWindowReducer:
         for (split_candidates_in_window, _start_index, _stop_index, completion) in self.sliding_window.windows(split_candidates):
             start = split_candidates_in_window[0]
             stop  = split_candidates_in_window[-1]
+            logging_filter.put_to_context('window', '[%d, %d)' % (start, stop))
 
             splits_relative_pos = split_candidates_in_window - start
             reduced_splits_relative_pos = self.base_reducer.reduce_candidate_list(
                 counts[start:stop], scorer_factory, splits_relative_pos)
             new_split_candidates_set.update(reduced_splits_relative_pos + start)
-            logger.info('Reduced split candidates in window [%d, %d) (%.2f %% of round complete): %d --> %d split-points' % (
-                start, stop, completion*100, len(split_candidates_in_window), len(reduced_splits_relative_pos)))
+            logger.info('Sliding (completion: %.2f %%): %d --> %d split-points' % (
+                100 * completion, len(split_candidates_in_window), len(reduced_splits_relative_pos)))
+        logging_filter.remove_from_context('window')
         return np.array(sorted(new_split_candidates_set))
 
 class RoundReducer:
@@ -331,13 +352,18 @@ class RoundReducer:
             num_rounds = self.num_rounds
 
         for round_ in range(1, num_rounds + 1):
-            logger.info('Starting split round %d, num_candidates %d' % (round_, len(split_candidates)))
+            logging_filter.put_to_context('round', round_)
+            logger.info('Starting round, num_candidates %d' % len(split_candidates))
             new_split_candidates = self.base_reducer.reduce_candidate_list(counts, scorer_factory, split_candidates)
             if np.array_equal(new_split_candidates, split_candidates):
-                logger.info('Round:%d No split points removed. Finishing round' % round_)
+                logger.info('No split points removed. Finishing round')
+                logging_filter.remove_from_context('round')
                 return new_split_candidates
             assert len(new_split_candidates) < len(split_candidates)
+            logger.info('Finishing round, num_candidates %d' % len(new_split_candidates))
             split_candidates = new_split_candidates
+
+        logging_filter.remove_from_context('round')
         logger.info('Splitting finished in %d rounds. Number of split points %d' % (round_, len(new_split_candidates)))
         return new_split_candidates
 
