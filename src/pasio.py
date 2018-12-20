@@ -308,7 +308,7 @@ class SlidingWindowSplitter:
             counts_in_window = counts[start:stop]
             split_candidates_in_window = np.arange(len(counts_in_window) + 1)
             segment_score, segment_split_points = self.base_splitter.split(counts_in_window, scorer_factory, split_candidates_in_window)
-            new_split_candidates_set.update([start + s for s in segment_split_points])
+            new_split_candidates_set.update(segment_split_points + start)
         logger.info('Final split of chromosome with %d split points' % len(new_split_candidates_set))
         split_candidates = np.array(sorted(new_split_candidates_set))
         return self.base_splitter.split(counts, scorer_factory, split_candidates)
@@ -333,10 +333,10 @@ class RoundSplitter:
             num_splits = len(split_candidates_in_window)
             logger.info('Round:%d Splitting window [%d, %d], %d points, (%.2f %% of round complete)' % (
                 round, start, stop, num_splits, completion*100))
-            segment_split_candidates = np.array([p - start for p in split_candidates_in_window])
+            segment_split_candidates = split_candidates_in_window - start
             segment_score, segment_split_points = self.base_splitter.split(
                 counts[start:stop], scorer_factory, segment_split_candidates)
-            new_split_candidates_set.update([start + s for s in segment_split_points])
+            new_split_candidates_set.update(segment_split_points + start)
         return np.array(sorted(new_split_candidates_set))
 
     def split(self, counts, scorer_factory, split_candidates):
