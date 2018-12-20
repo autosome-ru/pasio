@@ -48,22 +48,27 @@ This score is a sum of self score of a segment and a penalty for segment creatio
 `split_bedgraph` loads bedgraph file chromosome by chromosome, splits them into segments and writes into output tsv file.
 Coverage counts are stored internally with 1-nt resolution.
 
-In order to split a chromosome one of splitters is invoked.
-They return the best segmentation split points and the score of this segmentation.
-Some splitters accept `split_candidates` parameter; in that case only splits
-at specified positions are allowed.
+Splitting is proceeded in two steps: (a) reduce a list of candidate split points (sometimes this step is omitted),
+(b) choose splits from a list of candidates and calculate score of segmentation.
+The first step is performed with one of so called *reducers*. The second step is performed
+with one of *splitters* (each splitter also implements a reducer interface but not vice versa).
 
-Splitters:
+Splitters and reducers:
 * The most basic splitter is `SquareSplitter` which implements dynamic programming algorithm
-   with `O(N^2)` complexity where `N` is a number of split candidates. Other splitters perform
+   with `O(N^2)` complexity where `N` is a number of split candidates. Other splitters/reducers perform
    some heuristical optimisations on top of `SquareSplitter`
-* `SlidingWindowSplitter` tries to segment not an entire contig (chromosome) but shorter parts of contig.
+* `SlidingWindowReducer` tries to segment not an entire contig (chromosome) but shorter parts of contig.
    So they scan a sequence with a sliding window and remove split candidates which are unlikely.
-   Each window is processed using `SquareSplitter`. Candidates from different windows are then aggregated.
-* `RoundSplitter` perform the same procedure and repeat it for several rounds or until list of split candidates converges.
-* `NotZeroSplitter` doesn't try to make splits inside of zero-valued interval.
-* `NotConstantSplitter` doesn't try to make splits inside of a constant-valued interval. More precisely,
-   it drops split points which don't differ from a left-adjacent point.
+   Each window is processed using some base splitter (typically `SquareSplitter`).
+   Candidates from different windows are then aggregated.
+* `RoundReducer` perform the same procedure and repeat it for several rounds or until list of split candidates converges.
+* `NotZeroReducer` discards (all) splits if all points of an interval under consideration are zeros.
+* `NotConstantReducer` discards splits between same-valued points.
+* `ReducerCombiner` and `SplitterCombiner` accept a list of reducers to be sequentially applied.
+`SplitterCombiner` at the last stage can also split chromosome - so the last reducer in a list 
+should be not just a reducer but a splitter. To transform a reducer into splitter one can combine
+that reducer with `NopSplitter` - so that split candidates obtained by reducer will be treated as
+final splitting and NopSplitter make it possible to calculate its score.
 
 Splits denote segment boundaries to the left of position. Adjacent splits `a` and `b` form semi-closed interval `[a, b)`
 E.g. for coverage counts `[99,99,99, 1,1,1]` splits should be `[0, 3, 6]`.
