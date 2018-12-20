@@ -302,23 +302,23 @@ simple_greedy_scorer_factory = lambda counts, split_candidates: SimpleGreedyScor
 
 def test_not_constant_splitter():
     sequence = np.array([1,1,1,2,2,2,2])
-    splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
+    splitter = pasio.SplitterCombiner(pasio.NotZeroReducer(), pasio.SquareSplitter())
     score, splits = splitter.split(sequence, simple_scorer_factory, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, 3, 7])
 
-    splitter = pasio.NotZeroSplitter(base_splitter=pasio.SquareSplitter())
+    splitter = pasio.SplitterCombiner(pasio.NotZeroReducer(),pasio.SquareSplitter())
     score, splits = splitter.split(sequence, simple_greedy_scorer_factory, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, list(range(len(sequence) + 1)))
 
-    splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
+    splitter = pasio.SplitterCombiner(pasio.NotConstantReducer(), pasio.SquareSplitter())
     score, splits = splitter.split(sequence, simple_greedy_scorer_factory, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, 3, 7])
 
-    splitter = pasio.NotConstantSplitter(base_splitter=pasio.SquareSplitter())
+    splitter = pasio.SplitterCombiner(pasio.NotConstantReducer(), pasio.SquareSplitter())
     score, splits = splitter.split(sequence, simple_greedy_scorer_factory, np.array([0,1,2,3,4,5,7]))
     assert np.array_equal(splits, [0, 3, 7])
 
-    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.array([0, 3, 7])), [0, 3, 7])
-    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.arange(8)), [0, 3, 7])
-    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.array([0, 3, 5, 7])), [0, 3, 7])
-    assert np.array_equal(pasio.NotConstantSplitter.get_non_constant_split_candidates(sequence, np.array([0, 5, 7])), [0, 7])
+    assert np.array_equal(pasio.NotConstantReducer().reduce_candidate_list(sequence, simple_scorer_factory, np.array([0, 3, 7])), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantReducer().reduce_candidate_list(sequence, simple_scorer_factory, np.arange(8)), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantReducer().reduce_candidate_list(sequence, simple_scorer_factory, np.array([0, 3, 5, 7])), [0, 3, 7])
+    assert np.array_equal(pasio.NotConstantReducer().reduce_candidate_list(sequence, simple_scorer_factory, np.array([0, 5, 7])), [0, 7])
