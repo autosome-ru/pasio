@@ -182,28 +182,32 @@ class LogMarginalLikelyhoodComputer:
         return add_vec - sub_vec
 
 class SquareSplitter:
-    def __init__(self,
+    def __init__(self, scorer_factory,
                 length_regularization_multiplier=0,
                 length_regularization_function=lambda x: x,
                 split_number_regularization_multiplier=0,
                 split_number_regularization_function=lambda x: x):
+        self.scorer_factory = scorer_factory
         self.length_regularization_multiplier = length_regularization_multiplier
         self.split_number_regularization_multiplier = split_number_regularization_multiplier
         self.length_regularization_function = length_regularization_function
         self.split_number_regularization_function = split_number_regularization_function
 
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
-        score, splits = self.split(counts, scorer_factory, split_candidates)
+    def scorer(self, counts, split_candidates):
+        return self.scorer_factory(counts, split_candidates)
+
+    def reduce_candidate_list(self, counts, split_candidates):
+        score, splits = self.split(counts, split_candidates)
         return splits
 
-    def split(self, counts, scorer_factory, split_candidates):
+    def split(self, counts, split_candidates):
         if self.split_number_regularization_multiplier == 0 and self.length_regularization_multiplier == 0:
-            return self.split_without_normalizations(counts, scorer_factory, split_candidates)
+            return self.split_without_normalizations(counts, split_candidates)
         else:
-            return self.split_with_normalizations(counts, scorer_factory, split_candidates)
+            return self.split_with_normalizations(counts, split_candidates)
 
-    def split_with_normalizations(self, counts, scorer_factory, split_candidates):
-        score_computer = scorer_factory(counts, split_candidates)
+    def split_with_normalizations(self, counts, split_candidates):
+        score_computer = self.scorer(counts, split_candidates)
         num_split_candidates = len(split_candidates)
 
         prefix_scores = np.empty(num_split_candidates)
@@ -240,8 +244,8 @@ class SquareSplitter:
         split_positions = split_candidates[split_indices]
         return prefix_scores[-1], split_positions
 
-    def split_without_normalizations(self, counts, scorer_factory, split_candidates):
-        score_computer = scorer_factory(counts, split_candidates)
+    def split_without_normalizations(self, counts, split_candidates):
+        score_computer = self.scorer(counts, split_candidates)
         num_split_candidates = len(split_candidates)
 
         # prefix_scores[i] is the best score of prefix [0; i)
@@ -286,7 +290,7 @@ class SquareSplitter:
 
 
 class NotZeroReducer:
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def reduce_candidate_list(self, counts, split_candidates):
         if np.all(counts == 0):
             logger.info('Just zeros: %d --> 2 split points' % len(split_candidates))
             return np.array([0, len(counts)])
@@ -296,7 +300,7 @@ class NotZeroReducer:
 
 
 class NotConstantReducer:
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def reduce_candidate_list(self, counts, split_candidates):
         # ------left_to_border|right_to_border------
         (left_to_border_positions, ) = np.where( counts[:-1] != counts[1:] )
         points_of_count_change = 1 + left_to_border_positions
@@ -324,7 +328,7 @@ class SlidingWindowReducer:
         self.base_reducer = base_reducer
 
     # Single round of candidate list reduction
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def reduce_candidate_list(self, counts, split_candidates):
         new_split_candidates_set = set([0, len(counts)])
         for (split_candidates_in_window, _start_index, _stop_index, completion) in self.sliding_window.windows(split_candidates):
             start = split_candidates_in_window[0]
@@ -333,7 +337,7 @@ class SlidingWindowReducer:
 
             splits_relative_pos = split_candidates_in_window - start
             reduced_splits_relative_pos = self.base_reducer.reduce_candidate_list(
-                counts[start:stop], scorer_factory, splits_relative_pos)
+                counts[start:stop], splits_relative_pos)
             new_split_candidates_set.update(reduced_splits_relative_pos + start)
             logger.info('Sliding (completion: %.2f %%): %d --> %d split-points' % (
                 100 * completion, len(split_candidates_in_window), len(reduced_splits_relative_pos)))
@@ -345,7 +349,7 @@ class RoundReducer:
         self.base_reducer = base_reducer
         self.num_rounds = num_rounds
 
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def reduce_candidate_list(self, counts, split_candidates):
         if self.num_rounds is None:
             num_rounds = len(counts)
         else:
@@ -354,7 +358,7 @@ class RoundReducer:
         for round_ in range(1, num_rounds + 1):
             logging_filter.put_to_context('round', round_)
             logger.info('Starting round, num_candidates %d' % len(split_candidates))
-            new_split_candidates = self.base_reducer.reduce_candidate_list(counts, scorer_factory, split_candidates)
+            new_split_candidates = self.base_reducer.reduce_candidate_list(counts, split_candidates)
             if np.array_equal(new_split_candidates, split_candidates):
                 logger.info('No split points removed. Finishing round')
                 logging_filter.remove_from_context('round')
@@ -370,11 +374,17 @@ class RoundReducer:
 # Doesn't change list of split candidates. But for a given list of split candidates it can calculate score
 # Designed to make it possible to convert reducer into splitter with `SpliiterCombiner(reducer, NopSplitter())`
 class NopSplitter:
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def __init__(self, scorer_factory):
+        self.scorer_factory = scorer_factory
+
+    def scorer(self, counts, split_candidates):
+        return self.scorer_factory(counts, split_candidates)
+
+    def reduce_candidate_list(self, counts, split_candidates):
         return split_candidates
 
-    def split(self, counts, scorer_factory, split_candidates):
-        scores = scorer_factory(counts, split_candidates).scores()
+    def split(self, counts, split_candidates):
+        scores = self.scorer(counts, split_candidates).scores()
         final_score = np.sum(scores)
         return (final_score, split_candidates)
 
@@ -382,9 +392,9 @@ class ReducerCombiner:
     def __init__(self, *reducers):
         self.reducers = reducers
 
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def reduce_candidate_list(self, counts, split_candidates):
         for reducer in self.reducers:
-            split_candidates = reducer.reduce_candidate_list(counts, scorer_factory, split_candidates)
+            split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
         return split_candidates
 
 class SplitterCombiner:
@@ -392,15 +402,19 @@ class SplitterCombiner:
         self.reducers = reducers_and_splitter[:-1]
         self.splitter = reducers_and_splitter[-1]
 
-    def reduce_candidate_list(self, counts, scorer_factory, split_candidates):
+    def reduce_candidate_list(self, counts, split_candidates):
         for reducer in self.reducers:
-            split_candidates = reducer.reduce_candidate_list(counts, scorer_factory, split_candidates)
-        return self.splitter.reduce_candidate_list(counts, scorer_factory, split_candidates)
+            split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
+        return self.splitter.reduce_candidate_list(counts, split_candidates)
 
-    def split(self, counts, scorer_factory, split_candidates):
+    def split(self, counts, split_candidates):
         for reducer in self.reducers:
-            split_candidates = reducer.reduce_candidate_list(counts, scorer_factory, split_candidates)
-        return self.splitter.split(counts, scorer_factory, split_candidates)
+            split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
+        return self.splitter.split(counts, split_candidates)
+
+    def scorer(self, counts, split_candidates):
+        return self.splitter.scorer(counts, split_candidates)
+
 
 def parse_bedgraph(filename):
     '''
@@ -408,8 +422,8 @@ def parse_bedgraph(filename):
     '''
     chromosome_data = None
     previous_chrom = None
-    with open(filename) as bedgrpah_file:
-        for line in bedgrpah_file:
+    with open(filename) as bedgraph_file:
+        for line in bedgraph_file:
             if line.strip() == '':
                 continue
             chrom, start, stop, coverage = line.strip().split()
@@ -430,14 +444,14 @@ def parse_bedgraph(filename):
         yield chrom, chromosome_data, chromosome_start
 
 
-def split_bedgraph(in_filename, out_filename, scorer_factory, splitter):
+def split_bedgraph(in_filename, out_filename, splitter):
     with open(out_filename, 'w') as outfile:
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgraph(in_filename):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
             split_candidates = np.arange(len(counts) + 1)
-            score, splits = splitter.split(counts, scorer_factory, split_candidates)
-            scorer = scorer_factory(counts, splits)
+            score, splits = splitter.split(counts, split_candidates)
+            scorer = splitter.scorer(counts, splits)
             sum_logfac = scorer.total_sum_logfac()
             log_likelyhood = score - sum_logfac
             logger.info('chrom %s finished, score %f, number of splits %d. '
@@ -528,7 +542,7 @@ if __name__ == '__main__':
                      'for length legularization function %s' %
                      args.length_regularization_function)
 
-    square_splitter = SquareSplitter(
+    square_splitter = SquareSplitter(scorer_factory,
         length_regularization_multiplier=length_regularization_multiplier,
         length_regularization_function=length_regularization_function,
         split_number_regularization_multiplier=split_number_regularization_multiplier,
@@ -550,7 +564,7 @@ if __name__ == '__main__':
             sliding_window = SlidingWindow(window_size = args.window_size, window_shift = args.window_shift)
             base_reducer = SlidingWindowReducer(sliding_window = sliding_window, base_reducer = square_splitter)
             reducer = RoundReducer(base_reducer = base_reducer, num_rounds = args.num_rounds)
-            splitter = SplitterCombiner(reducer, NopSplitter())
+            splitter = SplitterCombiner(reducer, NopSplitter(scorer_factory))
 
     logger.info('Starting Pasio with args'+str(args))
-    split_bedgraph(args.bedgraph, args.out_bedgraph, scorer_factory, splitter)
+    split_bedgraph(args.bedgraph, args.out_bedgraph, splitter)

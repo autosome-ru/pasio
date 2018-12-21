@@ -8,8 +8,7 @@ def compute_log_marginal_likelyhood2(scorer, length):
     scorer.score(0, length)
 
 def segmentation(counts, scorer_factory, candidates):
-    optimal_split = pasio.SquareSplitter().split(counts, scorer_factory,
-            split_candidates = candidates)
+    optimal_split = pasio.SquareSplitter(scorer_factory).split(counts, candidates)
 
 def parse_bedgraph(filename):
     {k:v for (k,v,_) in pasio.parse_bedgraph(filename)}
