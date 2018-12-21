@@ -320,7 +320,7 @@ class SlidingWindow:
             stop = min(start + self.window_size + 1, length)
             completion = stop / length
             # start inclusive, stop exclusive
-            yield (arr[start:stop], start, stop, completion)
+            yield (arr[start:stop], completion)
 
 class SlidingWindowReducer:
     def __init__(self, sliding_window, base_reducer):
@@ -330,7 +330,7 @@ class SlidingWindowReducer:
     # Single round of candidate list reduction
     def reduce_candidate_list(self, counts, split_candidates):
         new_split_candidates_set = set([0, len(counts)])
-        for (split_candidates_in_window, _start_index, _stop_index, completion) in self.sliding_window.windows(split_candidates):
+        for (split_candidates_in_window, completion) in self.sliding_window.windows(split_candidates):
             start = split_candidates_in_window[0]
             stop  = split_candidates_in_window[-1]
             logging_filter.put_to_context('window', '[%d, %d)' % (start, stop))
