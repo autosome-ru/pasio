@@ -264,14 +264,14 @@ def test_split_into_segments_slidingwindow():
 
     base_splitter = pasio.SquareSplitter(simple_scorer_factory)
     sliding_window_reducer = pasio.SlidingWindowReducer(sliding_window, base_reducer=base_splitter)
-    splitter = pasio.SplitterCombiner(sliding_window_reducer, base_splitter)
+    splitter = pasio.ReducerCombiner(sliding_window_reducer, base_splitter)
     score, splits = splitter.split(sequence, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, len(A), len(sequence)])
     assert score == len(A)**2+len(B)**2
 
     base_splitter = pasio.SquareSplitter(simple_scorer_factory, split_number_regularization_multiplier=2)
     sliding_window_reducer = pasio.SlidingWindowReducer(sliding_window, base_reducer=base_splitter)
-    splitter = pasio.SplitterCombiner(sliding_window_reducer, base_splitter)
+    splitter = pasio.ReducerCombiner(sliding_window_reducer, base_splitter)
     score, splits = splitter.split(sequence, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, len(A), len(sequence)])
     assert score == len(A)**2 + len(B)**2 - 2
@@ -299,19 +299,19 @@ simple_greedy_scorer_factory = lambda counts, split_candidates: SimpleGreedyScor
 
 def test_not_constant_splitter():
     sequence = np.array([1,1,1,2,2,2,2])
-    splitter = pasio.SplitterCombiner(pasio.NotZeroReducer(), pasio.SquareSplitter(simple_scorer_factory))
+    splitter = pasio.ReducerCombiner(pasio.NotZeroReducer(), pasio.SquareSplitter(simple_scorer_factory))
     score, splits = splitter.split(sequence, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, 3, 7])
 
-    splitter = pasio.SplitterCombiner(pasio.NotZeroReducer(),pasio.SquareSplitter(simple_greedy_scorer_factory))
+    splitter = pasio.ReducerCombiner(pasio.NotZeroReducer(),pasio.SquareSplitter(simple_greedy_scorer_factory))
     score, splits = splitter.split(sequence, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, list(range(len(sequence) + 1)))
 
-    splitter = pasio.SplitterCombiner(pasio.NotConstantReducer(), pasio.SquareSplitter(simple_greedy_scorer_factory))
+    splitter = pasio.ReducerCombiner(pasio.NotConstantReducer(), pasio.SquareSplitter(simple_greedy_scorer_factory))
     score, splits = splitter.split(sequence, np.arange(len(sequence) + 1))
     assert np.array_equal(splits, [0, 3, 7])
 
-    splitter = pasio.SplitterCombiner(pasio.NotConstantReducer(), pasio.SquareSplitter(simple_greedy_scorer_factory))
+    splitter = pasio.ReducerCombiner(pasio.NotConstantReducer(), pasio.SquareSplitter(simple_greedy_scorer_factory))
     score, splits = splitter.split(sequence, np.array([0,1,2,3,4,5,7]))
     assert np.array_equal(splits, [0, 3, 7])
 

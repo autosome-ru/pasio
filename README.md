@@ -64,9 +64,8 @@ Splitters and reducers:
 * `RoundReducer` perform the same procedure and repeat it for several rounds or until list of split candidates converges.
 * `NotZeroReducer` discards (all) splits if all points of an interval under consideration are zeros.
 * `NotConstantReducer` discards splits between same-valued points.
-* `ReducerCombiner` and `SplitterCombiner` accept a list of reducers to be sequentially applied.
-`SplitterCombiner` at the last stage can also split chromosome - so the last reducer in a list 
-should be not just a reducer but a splitter. To transform a reducer into splitter one can combine
+* `ReducerCombiner` accept a list of reducers to be sequentially applied. The last reducer can also be a splitter.
+In that case combiner allows for splitting and scoring a segmentation. To transform any reducer into splitter one can combine
 that reducer with `NopSplitter` - so that split candidates obtained by reducer will be treated as
 final splitting and NopSplitter make it possible to calculate its score.
 

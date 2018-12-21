@@ -397,23 +397,21 @@ class ReducerCombiner:
             split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
         return split_candidates
 
-class SplitterCombiner:
-    def __init__(self, *reducers_and_splitter):
-        self.reducers = reducers_and_splitter[:-1]
-        self.splitter = reducers_and_splitter[-1]
-
-    def reduce_candidate_list(self, counts, split_candidates):
-        for reducer in self.reducers:
-            split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
-        return self.splitter.reduce_candidate_list(counts, split_candidates)
-
     def split(self, counts, split_candidates):
-        for reducer in self.reducers:
-            split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
-        return self.splitter.split(counts, split_candidates)
+        splitter = self.reducers[-1]
+        if hasattr(splitter, 'split') and callable(splitter.split):
+            for reducer in self.reducers[:-1]:
+                split_candidates = reducer.reduce_candidate_list(counts, split_candidates)
+            return splitter.split(counts, split_candidates)
+        else:
+            raise Exception('This ReducerCombiner has no splitter at the end of pipeline. Splitting no possible')
 
     def scorer(self, counts, split_candidates):
-        return self.splitter.scorer(counts, split_candidates)
+        splitter = self.reducers[-1]
+        if hasattr(splitter, 'scorer') and callable(splitter.scorer):
+            return splitter.scorer(counts, split_candidates)
+        else:
+            raise Exception('This ReducerCombiner has no splitter at the end of pipeline. Scoring not possible. Consider use of NopSplitter')
 
 
 def parse_bedgraph(filename):
@@ -552,19 +550,19 @@ if __name__ == '__main__':
         splitter = square_splitter
     else:
         if args.no_split_constant:
-            square_splitter = SplitterCombiner(NotConstantReducer(), square_splitter)
+            square_splitter = ReducerCombiner(NotConstantReducer(), square_splitter)
         else:
-            square_splitter = SplitterCombiner(NotZeroReducer(), square_splitter)
+            square_splitter = ReducerCombiner(NotZeroReducer(), square_splitter)
 
         if args.algorithm == 'slidingwindow':
             sliding_window = SlidingWindow(window_size = args.window_size, window_shift = args.window_shift)
             reducer = SlidingWindowReducer(sliding_window = sliding_window, base_reducer = square_splitter)
-            splitter = SplitterCombiner(reducer, square_splitter)
+            splitter = ReducerCombiner(reducer, square_splitter)
         elif args.algorithm == 'rounds':
             sliding_window = SlidingWindow(window_size = args.window_size, window_shift = args.window_shift)
             base_reducer = SlidingWindowReducer(sliding_window = sliding_window, base_reducer = square_splitter)
             reducer = RoundReducer(base_reducer = base_reducer, num_rounds = args.num_rounds)
-            splitter = SplitterCombiner(reducer, NopSplitter(scorer_factory))
+            splitter = ReducerCombiner(reducer, NopSplitter(scorer_factory))
 
     logger.info('Starting Pasio with args'+str(args))
     split_bedgraph(args.bedgraph, args.out_bedgraph, splitter)
