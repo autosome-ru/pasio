@@ -1,4 +1,4 @@
-import pasio_parallel_wrapper
+from .pasio_parallel_wrapper import split_by_chromosomes_and_get_sizes
 
 import tempfile
 import os
@@ -30,7 +30,7 @@ chr3   13    101    100
         temp_file.write(self.chr1)
         temp_file.close()
         temp_dir = tempfile.mkdtemp()
-        sizes = pasio_parallel_wrapper.split_by_chromosomes_and_get_sizes(filename, temp_dir)
+        sizes = split_by_chromosomes_and_get_sizes(filename, temp_dir)
         assert len(sizes) == 1
         assert sizes['chr1']['index'] == 0
         assert sizes['chr1']['label'] == 'chr1'
@@ -44,7 +44,7 @@ chr3   13    101    100
         temp_file.write(self.chr3)
         temp_file.close()
         temp_dir = tempfile.mkdtemp()
-        sizes = pasio_parallel_wrapper.split_by_chromosomes_and_get_sizes(filename, temp_dir)
+        sizes = split_by_chromosomes_and_get_sizes(filename, temp_dir)
         print(sizes)
         assert len(sizes) == 3
         assert sizes['chr1']['index'] == 0

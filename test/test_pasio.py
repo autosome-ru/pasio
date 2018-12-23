@@ -1,8 +1,6 @@
 import pytest
-import pasio
+from .context import pasio
 import numpy as np
-import random
-import tempfile
 import math
 import functools
 import operator
