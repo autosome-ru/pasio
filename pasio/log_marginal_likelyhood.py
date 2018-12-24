@@ -7,7 +7,7 @@ class ScorerFactory:
         self.alpha = alpha
         self.beta = beta
         self.log_gamma_computer = LogGammaComputer()
-        self.log_computer = LogComputer()
+        self.log_computer = LogComputer(shift = beta)
 
     def __call__(self, counts, split_candidates):
         return LogMarginalLikelyhoodComputer(counts, self.alpha, self.beta, split_candidates,
@@ -30,13 +30,13 @@ def assert_correct_split_candidates(split_candidates, counts):
 class LogMarginalLikelyhoodComputer:
     def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None):
         assert isinstance(alpha, int)
-        assert isinstance(beta, int)
+        assert isinstance(beta, float)
         assert alpha >= 0
         assert beta >= 0
         self.alpha = alpha
         self.beta = beta
 
-        self.log_computer = log_computer if log_computer else LogComputer()
+        self.log_computer = log_computer if log_computer else LogComputer(shift=beta)
         self.log_gamma_computer = log_gamma_computer if log_gamma_computer else LogGammaComputer()
 
         assert_correct_counts(counts)
@@ -50,7 +50,7 @@ class LogMarginalLikelyhoodComputer:
         count_logfacs = self.log_gamma_computer.compute_for_array_unbound(counts + 1)
         self.logfac_cumsum = np.hstack([0, np.cumsum(count_logfacs)])[split_candidates]
 
-        self.segment_creation_cost = alpha * self.log_computer.compute_for_number(beta) - self.log_gamma_computer.compute_for_number(alpha)
+        self.segment_creation_cost = alpha * self.log_computer.compute_for_number(0) - self.log_gamma_computer.compute_for_number(alpha)
 
     def total_sum_logfac(self):
         return self.logfac_cumsum[-1]
@@ -59,9 +59,8 @@ class LogMarginalLikelyhoodComputer:
         segment_lengths = np.diff(self.split_candidates)
         segment_counts = np.diff(self.cumsum)
         shifted_segment_counts = segment_counts + self.alpha
-        shifted_segment_lengths = segment_lengths + self.beta
         add = self.log_gamma_computer.compute_for_array_unbound(shifted_segment_counts)
-        sub = shifted_segment_counts * self.log_computer.compute_for_array_unbound(shifted_segment_lengths)
+        sub = shifted_segment_counts * self.log_computer.compute_for_array_unbound(segment_lengths)
         self_scores = add - sub
         return self_scores + self.segment_creation_cost
 
@@ -81,9 +80,8 @@ class LogMarginalLikelyhoodComputer:
         segment_count = self.cumsum[stop] - self.cumsum[start]
         shifted_segment_count = segment_count + self.alpha
         segment_length = self.split_candidates[stop] - self.split_candidates[start]
-        shifted_segment_length = segment_length + self.beta
         add = self.log_gamma_computer.compute_for_number(shifted_segment_count)
-        sub = shifted_segment_count * self.log_computer.compute_for_number(shifted_segment_length)
+        sub = shifted_segment_count * self.log_computer.compute_for_number(segment_length)
         return add - sub
 
     def self_score_no_splits(self):
@@ -100,10 +98,9 @@ class LogMarginalLikelyhoodComputer:
         # it's more efficient to add up numbers, then add result to vector
         #   (alternative is to add numbers to a vector one-by-one)
 
-        # segment_length + beta
-        shifted_segment_length_vec = (self.beta + self.split_candidates[stop]) - self.split_candidates[:stop]
+        segment_length_vec = self.split_candidates[stop] - self.split_candidates[:stop]
 
         add_vec = self.log_gamma_computer.compute_for_array(shifted_segment_count_vec, max_value=(self.alpha + self.cumsum[stop]))
-        sub_vec = shifted_segment_count_vec * self.log_computer.compute_for_array(shifted_segment_length_vec, max_value=(self.beta + self.split_candidates[stop]))
+        sub_vec = shifted_segment_count_vec * self.log_computer.compute_for_array(segment_length_vec, max_value=self.split_candidates[stop])
 
         return add_vec - sub_vec

@@ -33,7 +33,7 @@ python pasio.py
                            required=True)
     argparser.add_argument('--alpha', type=int, required=True,
                            help="alpha parameter of gamma distribution")
-    argparser.add_argument('--beta', type=int, required=True,
+    argparser.add_argument('--beta', type=float, required=True,
                            help="beta parameter of gamma distribution")
     argparser.add_argument('--split_number_regularization', type=float, default=0,
                            help="Penalty multiplier for each split")
