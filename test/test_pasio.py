@@ -182,7 +182,7 @@ def test_approximate_log_gamma():
 
     array_to_count = np.array([0,1,20,1024,10000])
     logfac_array = np.array([np.log(np.arange(1, x+1)).sum() for x in array_to_count])
-    assert np.allclose(pasio.log_gamma_computer.compute_for_array(array_to_count+1), logfac_array, atol=tol)
+    assert np.allclose(pasio.log_gamma_computer.compute_for_array_unbound(array_to_count+1), logfac_array, atol=tol)
 
 
 def test_suffixes_scores():

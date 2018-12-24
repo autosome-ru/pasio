@@ -2,8 +2,8 @@ from __future__ import division
 import numpy as np
 from .cached_log import LogComputer, LogGammaComputer
 
-log_computer = LogComputer()
 log_gamma_computer = LogGammaComputer()
+log_computer = LogComputer()
 
 def assert_correct_counts(counts):
     assert isinstance(counts, np.ndarray)
@@ -36,7 +36,7 @@ class LogMarginalLikelyhoodComputer:
 
         self.cumsum = np.hstack([0, np.cumsum(counts)])[split_candidates]
 
-        count_logfacs = log_gamma_computer.compute_for_array(counts + 1)
+        count_logfacs = log_gamma_computer.compute_for_array_unbound(counts + 1)
         self.logfac_cumsum = np.hstack([0, np.cumsum(count_logfacs)])[split_candidates]
 
         self.segment_creation_cost = alpha * log_computer.compute_for_number(beta) - log_gamma_computer.compute_for_number(alpha)
@@ -49,8 +49,8 @@ class LogMarginalLikelyhoodComputer:
         segment_counts = np.diff(self.cumsum)
         shifted_segment_counts = segment_counts + self.alpha
         shifted_segment_lengths = segment_lengths + self.beta
-        add = log_gamma_computer.compute_for_array(shifted_segment_counts)
-        sub = shifted_segment_counts * log_computer.compute_for_array(shifted_segment_lengths)
+        add = log_gamma_computer.compute_for_array_unbound(shifted_segment_counts)
+        sub = shifted_segment_counts * log_computer.compute_for_array_unbound(shifted_segment_lengths)
         self_scores = add - sub
         return self_scores + self.segment_creation_cost
 
