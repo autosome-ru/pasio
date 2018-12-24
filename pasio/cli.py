@@ -31,7 +31,7 @@ python pasio.py
                            help="Input bedgraph path")
     argparser.add_argument('-o', '--out_bedgraph', help="Output begraph path",
                            required=True)
-    argparser.add_argument('--alpha', type=int, required=True,
+    argparser.add_argument('--alpha', type=float, required=True,
                            help="alpha parameter of gamma distribution")
     argparser.add_argument('--beta', type=float, required=True,
                            help="beta parameter of gamma distribution")
