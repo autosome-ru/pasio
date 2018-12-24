@@ -172,17 +172,18 @@ def test_split_with_length_regularization():
 
 
 def test_approximate_log_gamma():
+    log_gamma_computer = pasio.LogGammaComputer()
     tol = 1e-8
-    assert np.abs(np.log(np.arange(1, 256+1)).sum() - pasio.log_gamma_computer.compute_for_number(256+1)) < tol
-    assert np.abs(np.log(np.arange(1, 4095+1)).sum() - pasio.log_gamma_computer.compute_for_number(4095+1)) < tol
+    assert np.abs(np.log(np.arange(1, 256+1)).sum() - log_gamma_computer.compute_for_number(256+1)) < tol
+    assert np.abs(np.log(np.arange(1, 4095+1)).sum() - log_gamma_computer.compute_for_number(4095+1)) < tol
     assert np.allclose(np.log(np.arange(1, 4096+1)).sum(),
-                       pasio.log_gamma_computer.compute_for_number(4096+1), atol=tol)
-    assert np.abs(np.log(np.arange(1, 4097+1)).sum() - pasio.log_gamma_computer.compute_for_number(4097+1)) < tol
-    assert np.abs(np.log(np.arange(1, 10000+1)).sum() - pasio.log_gamma_computer.compute_for_number(10000+1)) < tol
+                       log_gamma_computer.compute_for_number(4096+1), atol=tol)
+    assert np.abs(np.log(np.arange(1, 4097+1)).sum() - log_gamma_computer.compute_for_number(4097+1)) < tol
+    assert np.abs(np.log(np.arange(1, 10000+1)).sum() - log_gamma_computer.compute_for_number(10000+1)) < tol
 
     array_to_count = np.array([0,1,20,1024,10000])
     logfac_array = np.array([np.log(np.arange(1, x+1)).sum() for x in array_to_count])
-    assert np.allclose(pasio.log_gamma_computer.compute_for_array_unbound(array_to_count+1), logfac_array, atol=tol)
+    assert np.allclose(log_gamma_computer.compute_for_array_unbound(array_to_count+1), logfac_array, atol=tol)
 
 
 def test_suffixes_scores():

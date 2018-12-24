@@ -2,7 +2,7 @@ import argparse
 import sys
 import numpy as np
 
-from .log_marginal_likelyhood import LogMarginalLikelyhoodComputer
+from .log_marginal_likelyhood import LogMarginalLikelyhoodComputer, ScorerFactory
 from .square_splitter import SquareSplitter
 from .sliding_window_reducer import SlidingWindow, SlidingWindowReducer
 from .round_reducer import RoundReducer
@@ -63,8 +63,7 @@ def configure_splitter(args):
             sys.exit('Argument --window_shift is required for algorithms slidingwingow and rounds')
         if args.window_size is None:
             sys.exit('Argument --window_size is required for algorithms slidingwingow and rounds')
-    scorer_factory = lambda counts, split_candidates: LogMarginalLikelyhoodComputer(
-        counts, args.alpha, args.beta, split_candidates)
+    scorer_factory = ScorerFactory(args.alpha, args.beta)
 
     length_regularization_functions = {
         'none': lambda x: x,
