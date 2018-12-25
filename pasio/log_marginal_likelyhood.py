@@ -49,8 +49,6 @@ class LogMarginalLikelyhoodComputer:
         self.log_gamma_alpha_computer = log_gamma_alpha_computer if log_gamma_alpha_computer else LogGammaComputer(shift=alpha)
 
         assert_correct_counts(counts)
-        self.counts = counts
-
         assert_correct_split_candidates(split_candidates, counts)
         self.split_candidates = split_candidates
 
