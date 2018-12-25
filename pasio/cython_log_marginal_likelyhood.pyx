@@ -178,15 +178,60 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
     # marginal likelihoods for segments [i, stop) for all i < stop.
     # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
     # These scores are not corrected for constant penalty for segment creation
-    cpdef all_suffixes_self_score(self, int stop):
-        segment_count_vec = self.cumsum[stop] - self.cumsum[0:stop]
-        # segment_count + alpha
-        # it's more efficient to add up numbers, then add result to vector
-        #   (alternative is to add numbers to a vector one-by-one)
-        shifted_segment_count_vec = (self.real_alpha + self.cumsum[stop]) - self.cumsum[0:stop]
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef np.ndarray all_suffixes_self_score(self, int stop):
+        cdef int i
+        cdef np.ndarray result = np.empty(stop, dtype=float)
+        cdef double[::1] result_view = result
+        cdef long[::1] cumsum_view = self.cumsum
+        cdef long[::1] split_candidates_view = self.split_candidates
 
-        segment_length_vec = self.split_candidates[stop] - self.split_candidates[:stop]
+        cdef int cumsum_last = cumsum_view[stop]
+        cdef double cumsum_last_shifted = self.real_alpha + cumsum_last
+        cdef int split_candidates_last = split_candidates_view[stop]
+        cdef int segment_length
+        cdef int segment_count
+        cdef double shifted_segment_count
+        cdef double add, sub
 
-        add_vec = self.log_gamma_alpha_computer.compute_for_array(segment_count_vec, max_value=self.cumsum[stop])
-        sub_vec = shifted_segment_count_vec * self.log_computer.compute_for_array(segment_length_vec, max_value=self.split_candidates[stop])
-        return add_vec - sub_vec
+        cdef bint log_gamma_alpha_fully_cached = (cumsum_last < self.log_gamma_alpha_computer.cache_size)
+        cdef bint log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
+
+        # direct memory access is much more efficient than even inlined method call
+        cdef double[::1] log_gamma_alpha_view = self.log_gamma_alpha_computer.precomputed_view
+        cdef double[::1] log_view = self.log_computer.precomputed_view
+
+        if log_gamma_alpha_fully_cached and log_fully_cached:
+            for i in range(stop):
+                segment_count = cumsum_last - cumsum_view[i]
+                shifted_segment_count = cumsum_last_shifted - cumsum_view[i]
+                segment_length = split_candidates_last - split_candidates_view[i]
+                add = log_gamma_alpha_view[segment_count]
+                sub = shifted_segment_count * log_view[segment_length]
+                result_view[i] = add - sub
+        elif log_gamma_alpha_fully_cached and not log_fully_cached:
+            for i in range(stop):
+                segment_count = cumsum_last - cumsum_view[i]
+                shifted_segment_count = cumsum_last_shifted - cumsum_view[i]
+                segment_length = split_candidates_last - split_candidates_view[i]
+                add = log_gamma_alpha_view[segment_count]
+                sub = shifted_segment_count * self.log_computer.compute_for_number_cython(segment_length)
+                result_view[i] = add - sub
+        elif not log_gamma_alpha_fully_cached and log_fully_cached:
+            for i in range(stop):
+                segment_count = cumsum_last - cumsum_view[i]
+                shifted_segment_count = cumsum_last_shifted - cumsum_view[i]
+                segment_length = split_candidates_last - split_candidates_view[i]
+                add = self.log_gamma_alpha_computer.compute_for_number_cython(segment_count)
+                sub = shifted_segment_count * log_view[segment_length]
+                result_view[i] = add - sub
+        elif not log_gamma_alpha_fully_cached and not log_fully_cached:
+            for i in range(stop):
+                segment_count = cumsum_last - cumsum_view[i]
+                shifted_segment_count = cumsum_last_shifted - cumsum_view[i]
+                segment_length = split_candidates_last - split_candidates_view[i]
+                add = self.log_gamma_alpha_computer.compute_for_number_cython(segment_count)
+                sub = shifted_segment_count * self.log_computer.compute_for_number_cython(segment_length)
+                result_view[i] = add - sub
+        return result
