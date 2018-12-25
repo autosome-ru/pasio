@@ -107,21 +107,30 @@ cdef class LogMarginalLikelyhoodComputer:
     def score_no_splits(self):
         return self.self_score_no_splits() + self.segment_creation_cost
 
-cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
-    cdef int int_alpha
-    def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
-        super(LogMarginalLikelyhoodIntAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
-        self.int_alpha = alpha
-
     # marginal likelihoods for segments [i, stop) for all i < stop.
     # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
     # These scores are not corrected for constant penalty for segment creation
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cpdef np.ndarray all_suffixes_self_score(self, int stop):
-        cdef int i
         cdef np.ndarray result = np.empty(stop, dtype=float)
-        cdef double[::1] result_view = result
+        self.all_suffixes_self_score_in_place(stop, result)
+        return result
+
+    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
+        raise NotImplementedError()
+
+
+cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
+    cdef int int_alpha
+    def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
+        super(LogMarginalLikelyhoodIntAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
+        self.int_alpha = alpha
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
+        cdef int i
         cdef long[::1] cumsum_view = self.cumsum
         cdef long[::1] split_candidates_view = self.split_candidates
 
@@ -166,7 +175,6 @@ cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
                 add = self.log_gamma_computer.compute_for_number_cython(shifted_segment_count)
                 sub = shifted_segment_count * self.log_computer.compute_for_number_cython(segment_length)
                 result_view[i] = add - sub
-        return result
 
 cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer):
     cdef double real_alpha
@@ -174,16 +182,10 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
         super(LogMarginalLikelyhoodRealAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.real_alpha = alpha
 
-
-    # marginal likelihoods for segments [i, stop) for all i < stop.
-    # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
-    # These scores are not corrected for constant penalty for segment creation
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    cpdef np.ndarray all_suffixes_self_score(self, int stop):
+    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
         cdef int i
-        cdef np.ndarray result = np.empty(stop, dtype=float)
-        cdef double[::1] result_view = result
         cdef long[::1] cumsum_view = self.cumsum
         cdef long[::1] split_candidates_view = self.split_candidates
 
@@ -234,4 +236,3 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
                 add = self.log_gamma_alpha_computer.compute_for_number_cython(segment_count)
                 sub = shifted_segment_count * self.log_computer.compute_for_number_cython(segment_length)
                 result_view[i] = add - sub
-        return result
