@@ -1,5 +1,7 @@
-from builtins import range
 import numpy as np
+cimport numpy as np
+cimport cython
+from .cython_log_marginal_likelyhood cimport LogMarginalLikelyhoodComputer
 
 cdef class SquareSplitter:
     cdef object scorer_factory
@@ -71,42 +73,56 @@ cdef class SquareSplitter:
         split_positions = split_candidates[split_indices]
         return prefix_scores[-1], split_positions
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     cpdef split_without_normalizations(self, counts, split_candidates):
-        score_computer = self.scorer(counts, split_candidates)
+        cdef LogMarginalLikelyhoodComputer score_computer = self.scorer(counts, split_candidates)
+
         num_split_candidates = len(split_candidates)
+        cdef int num_split_candidates_int = len(split_candidates)
 
         # prefix_scores[i] is the best score of prefix [0; i)
-        prefix_scores = np.empty(num_split_candidates)
-        prefix_scores[0] = 0
+        cdef np.ndarray prefix_scores = np.empty(num_split_candidates)
+        cdef double[::1] prefix_scores_view = prefix_scores
+        prefix_scores_view[0] = 0
 
         # `previous_splits[i]` (later `ps`) is a position of the last split
         # in the best segmentation of prefix [0, i) which is not the end of the prefix
         # i.e. this prefix segmentation looks like `...... ps - 1) [ps ... i - 1)`
-        previous_splits = np.empty(num_split_candidates, dtype=int)
-        previous_splits[0] = 0
+        cdef np.ndarray previous_splits = np.empty(num_split_candidates, dtype=int)
+        cdef long[::1] previous_splits_view = previous_splits
+        previous_splits_view[0] = 0
 
-        score_if_last_split_at = np.empty(num_split_candidates, dtype=float)
+        cdef np.ndarray score_if_last_split_at = np.empty(num_split_candidates, dtype=float)
+        cdef double[::1] score_if_last_split_at_view = score_if_last_split_at
+
+        cdef int prefix_end, last_split_pos, optimal_last_split
+        cdef double cur_score, max_score
 
         # find the score and previous point of the best segmentation of the prefix [0, prefix_end)
         # such that the last split in segmentation is prefix_end (split is between `prefix_end - 1` and `prefix_end`)
         # (indexation runs over split candidates, not over all points)
-        for prefix_end in range(1, num_split_candidates):
+        for prefix_end in range(1, num_split_candidates_int):
             # score consists of (a) score of the last segment
             score_computer.all_suffixes_self_score_in_place(prefix_end, score_if_last_split_at)
             #                   (b) score of the prefix before the last segment
-            score_if_last_split_at[:prefix_end] += prefix_scores[:prefix_end]
-
-            optimal_last_split = np.argmax(score_if_last_split_at[:prefix_end])
-            previous_splits[prefix_end] = optimal_last_split
+            max_score = score_if_last_split_at_view[0] + prefix_scores_view[0]
+            optimal_last_split = 0
+            for last_split_pos in range(1, prefix_end):
+                cur_score = score_if_last_split_at_view[last_split_pos] + prefix_scores_view[last_split_pos]
+                if cur_score > max_score:
+                    max_score = cur_score
+                    optimal_last_split = last_split_pos
+            previous_splits_view[prefix_end] = optimal_last_split
 
             #                   (c) and constant penalty for segment creation
-            prefix_scores[prefix_end] = score_if_last_split_at[optimal_last_split] + score_computer.segment_creation_cost
+            prefix_scores_view[prefix_end] = max_score + score_computer.segment_creation_cost
 
         # reminder: splits indexing is over split candidates, not contig positions
         split_indices = SquareSplitter.collect_split_points(previous_splits)
         # but we want to return contig positions of these splits
         split_positions = split_candidates[split_indices]
-        return prefix_scores[-1], split_positions
+        return prefix_scores[num_split_candidates - 1], split_positions
 
     @staticmethod
     def collect_split_points(previous_splits):
