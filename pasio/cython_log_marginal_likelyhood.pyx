@@ -44,14 +44,6 @@ def assert_correct_split_candidates(split_candidates, counts):
 
 # Indexing of LogMarginalLikelyhoodComputer iterates over split candidates, not counts
 cdef class LogMarginalLikelyhoodComputer:
-    cdef object alpha
-    cdef LogComputer log_computer
-    cdef LogGammaComputer log_gamma_computer
-    cdef LogGammaComputer log_gamma_alpha_computer
-    cdef np.ndarray split_candidates
-    cdef np.ndarray cumsum, logfac_cumsum
-    cdef readonly double segment_creation_cost
-
     def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
         self.alpha = alpha
 
@@ -122,7 +114,6 @@ cdef class LogMarginalLikelyhoodComputer:
 
 
 cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
-    cdef int int_alpha
     def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
         super(LogMarginalLikelyhoodIntAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.int_alpha = alpha
@@ -177,7 +168,6 @@ cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
                 result_view[i] = add - sub
 
 cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer):
-    cdef double real_alpha
     def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
         super(LogMarginalLikelyhoodRealAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.real_alpha = alpha

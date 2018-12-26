@@ -1,4 +1,4 @@
-from .square_splitter import SquareSplitter
+from .cython_square_splitter import SquareSplitter
 from .round_reducer import RoundReducer
 from .sliding_window_reducer import SlidingWindow, SlidingWindowReducer
 from .constants_reducer import NotConstantReducer, NotZeroReducer

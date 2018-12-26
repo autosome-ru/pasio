@@ -3,7 +3,7 @@ import sys
 import numpy as np
 
 from .cython_log_marginal_likelyhood import LogMarginalLikelyhoodComputer, ScorerFactory
-from .square_splitter import SquareSplitter
+from .cython_square_splitter import SquareSplitter
 from .sliding_window_reducer import SlidingWindow, SlidingWindowReducer
 from .round_reducer import RoundReducer
 from .constants_reducer import NotZeroReducer, NotConstantReducer
