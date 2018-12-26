@@ -36,7 +36,7 @@ class SquareSplitter:
         previous_splits = np.empty(num_split_candidates, dtype=int)
         previous_splits[0] = 0
 
-        num_splits = np.zeros(num_split_candidates)
+        num_splits = np.zeros(num_split_candidates, dtype=int)
 
         for prefix_end in range(1, num_split_candidates):
             score_if_last_split_at = score_computer.all_suffixes_self_score(prefix_end)
