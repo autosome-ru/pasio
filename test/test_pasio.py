@@ -80,6 +80,9 @@ class SimpleScorer:
     def all_suffixes_self_score(self, stop):
         return np.array([self.self_score(i, stop) for i in range(stop)], dtype='float64')
 
+    def all_suffixes_self_score_in_place(self, stop, result):
+        result[:stop] = self.all_suffixes_self_score(stop)
+
 simple_scorer_factory = lambda counts, split_candidates: SimpleScorer(counts, split_candidates)
 
 def test_split_into_segments_square():
@@ -292,6 +295,9 @@ class SimpleGreedyScorer:
 
     def all_suffixes_self_score(self, stop):
         return np.array([self.self_score(i, stop) for i in range(stop)], dtype='float64')
+
+    def all_suffixes_self_score_in_place(self, stop, result):
+        result[:stop] = self.all_suffixes_self_score(stop)
 
 simple_greedy_scorer_factory = lambda counts, split_candidates: SimpleGreedyScorer(counts, split_candidates)
 

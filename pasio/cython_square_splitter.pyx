@@ -76,7 +76,7 @@ cdef class SquareSplitter:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cpdef split_without_normalizations(self, counts, split_candidates):
-        cdef LogMarginalLikelyhoodComputer score_computer = self.scorer(counts, split_candidates)
+        score_computer = self.scorer(counts, split_candidates)
 
         num_split_candidates = len(split_candidates)
         cdef int num_split_candidates_int = len(split_candidates)
