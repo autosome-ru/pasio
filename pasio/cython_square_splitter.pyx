@@ -43,22 +43,23 @@ cdef class SquareSplitter:
         previous_splits[0] = 0
 
         num_splits = np.zeros(num_split_candidates, dtype=int)
+        score_if_last_split_at = np.empty(num_split_candidates, dtype=float)
 
         for prefix_end in range(1, num_split_candidates):
-            score_if_last_split_at = score_computer.all_suffixes_self_score(prefix_end)
-            score_if_last_split_at += prefix_scores[:prefix_end]
+            score_computer.all_suffixes_self_score_in_place(prefix_end, score_if_last_split_at)
+            score_if_last_split_at[:prefix_end] += prefix_scores[:prefix_end]
 
             if self.split_number_regularization_multiplier != 0:
                 number_regularization = self.split_number_regularization_function(num_splits[:prefix_end] + 1)
-                score_if_last_split_at -= self.split_number_regularization_multiplier * number_regularization
+                score_if_last_split_at[:prefix_end] -= self.split_number_regularization_multiplier * number_regularization
                 score_if_last_split_at[0] += self.split_number_regularization_multiplier * self.split_number_regularization_function(1)
 
             if self.length_regularization_multiplier != 0:
                 length_regulatization = self.length_regularization_function(split_candidates[prefix_end] - split_candidates[:prefix_end])
                 last_segment_length_regularization = self.length_regularization_multiplier * length_regulatization
-                score_if_last_split_at -= last_segment_length_regularization[:prefix_end]
+                score_if_last_split_at[:prefix_end] -= last_segment_length_regularization[:prefix_end]
 
-            optimal_last_split = np.argmax(score_if_last_split_at)
+            optimal_last_split = np.argmax(score_if_last_split_at[:prefix_end])
             previous_splits[prefix_end] = optimal_last_split
 
             if optimal_last_split != 0:
@@ -84,16 +85,18 @@ cdef class SquareSplitter:
         previous_splits = np.empty(num_split_candidates, dtype=int)
         previous_splits[0] = 0
 
+        score_if_last_split_at = np.empty(num_split_candidates, dtype=float)
+
         # find the score and previous point of the best segmentation of the prefix [0, prefix_end)
         # such that the last split in segmentation is prefix_end (split is between `prefix_end - 1` and `prefix_end`)
         # (indexation runs over split candidates, not over all points)
         for prefix_end in range(1, num_split_candidates):
             # score consists of (a) score of the last segment
-            score_if_last_split_at = score_computer.all_suffixes_self_score(prefix_end)
+            score_computer.all_suffixes_self_score_in_place(prefix_end, score_if_last_split_at)
             #                   (b) score of the prefix before the last segment
-            score_if_last_split_at += prefix_scores[:prefix_end]
+            score_if_last_split_at[:prefix_end] += prefix_scores[:prefix_end]
 
-            optimal_last_split = np.argmax(score_if_last_split_at)
+            optimal_last_split = np.argmax(score_if_last_split_at[:prefix_end])
             previous_splits[prefix_end] = optimal_last_split
 
             #                   (c) and constant penalty for segment creation
