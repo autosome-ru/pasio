@@ -18,7 +18,7 @@ def test_stat_split_into_segments_square():
         return best_score, split_point
 
     np.random.seed(4)
-    scorer_factory = lambda counts, split_candidates: pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, split_candidates)
+    scorer_factory = lambda counts, split_candidates: pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, split_candidates)
     for repeat in range(5):
         counts = np.concatenate([np.random.poisson(15, 100),
                                  np.random.poisson(20, 100)])
@@ -48,16 +48,16 @@ def test_log_marginal_likelyhood_exact():
                 math.gamma(alpha) * counts_facproduct * ((ns+beta)**(cs+alpha))
             )
         )
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0]), 3, 5, split_candidates=np.array([0,1]))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(np.array([0]), 3, 5, split_candidates=np.array([0,1]))
     assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([0]), 3, 5))
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([0, 1]), 3, 5, split_candidates=np.array([0,2]))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(np.array([0, 1]), 3, 5, split_candidates=np.array([0,2]))
     assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([0, 1]), 3, 5))
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 5, 2, split_candidates=np.array([0,4]))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(np.array([4, 0, 1, 3]), 5, 2, split_candidates=np.array([0,4]))
     assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([4, 0, 1, 3]), 5, 2))
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(np.array([4, 0, 1, 3]), 1, 1, split_candidates=np.array([0,4]))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(np.array([4, 0, 1, 3]), 1, 1, split_candidates=np.array([0,4]))
     assert np.allclose(scorer.log_marginal_likelyhoods(), exact_function(np.array([4, 0, 1, 3]), 1, 1))
 
 
@@ -191,30 +191,30 @@ def test_suffixes_scores():
     counts = np.concatenate([np.random.poisson(15, 100),
                              np.random.poisson(20, 100)])
 
-    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, np.arange(len(counts) + 1))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, np.arange(len(counts) + 1))
     suffixes_scores = [scorer.self_score(i, 150) for i in range(150)]
     assert np.allclose(scorer.all_suffixes_self_score(150), np.array(suffixes_scores))
 
     counts = np.array([0,0,1,0,0,2,2,2,10,11,100,1,0,0,1,0], dtype='int64')
-    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, np.arange(len(counts) + 1))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, np.arange(len(counts) + 1))
     suffixes_scores = [scorer.self_score(i, len(counts)-1) for i in range(len(counts)-1)]
     assert np.allclose(scorer.all_suffixes_self_score(len(counts)-1), np.array(suffixes_scores))
 
 def test_suffixes_scores_with_candidates():
     np.random.seed(2)
     counts = np.arange(1,10)
-    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, np.arange(len(counts) + 1))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, np.arange(len(counts) + 1))
     candidates = np.array([0,1,3,4,5,6,7,8,9])
-    scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, candidates)
+    scorer_with_candidates = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, candidates)
     candidate_suffixes = scorer.all_suffixes_self_score(9)[candidates[:-1]]
     suffixes_just_candidates = scorer_with_candidates.all_suffixes_self_score(8)
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)
 
     counts = np.concatenate([np.random.poisson(15, 100),
                              np.random.poisson(20, 100)])
-    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, np.arange(len(counts) + 1))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, np.arange(len(counts) + 1))
     candidates = np.array([0,1,10,20,21,30,40, 149,200])
-    scorer_with_candidates = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, candidates)
+    scorer_with_candidates = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, candidates)
     candidate_suffixes = scorer.all_suffixes_self_score(200)[candidates[:-1]]
     suffixes_just_candidates = scorer_with_candidates.all_suffixes_self_score(len(candidates)-1)
     assert np.allclose(candidate_suffixes, suffixes_just_candidates)

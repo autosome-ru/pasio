@@ -40,6 +40,8 @@ def assert_correct_split_candidates(split_candidates, counts):
     assert np.all(split_candidates[1:] > split_candidates[:-1]) # strictly ascending
 
 # Indexing of LogMarginalLikelyhoodComputer iterates over split candidates, not counts
+# LogMarginalLikelyhoodComputer is a base class. It's likely that you need one of its subclasses:
+# either LogMarginalLikelyhoodIntAlphaComputer or LogMarginalLikelyhoodRealAlphaComputer
 class LogMarginalLikelyhoodComputer:
     def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
         self.alpha = alpha

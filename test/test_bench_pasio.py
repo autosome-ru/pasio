@@ -19,7 +19,7 @@ def test_benchmark_segmentation(benchmark):
     counts = np.concatenate([np.random.poisson(15, 50),
                              np.random.poisson(20, 50)])
 
-    scorer_factory = lambda counts, split_candidates: pasio.LogMarginalLikelyhoodComputer(
+    scorer_factory = lambda counts, split_candidates: pasio.LogMarginalLikelyhoodIntAlphaComputer(
         counts, 1, 1, split_candidates)
     result = benchmark(segmentation, counts, scorer_factory, np.arange(len(counts) + 1))
 
@@ -29,7 +29,7 @@ def test_benchmark_segmentation_long(benchmark):
     counts = np.concatenate([np.random.poisson(15, 500),
                              np.random.poisson(20, 500)])
 
-    scorer_factory = lambda counts, split_candidates: pasio.LogMarginalLikelyhoodComputer(
+    scorer_factory = lambda counts, split_candidates: pasio.LogMarginalLikelyhoodIntAlphaComputer(
         counts, 1, 1, split_candidates)
     result = benchmark(segmentation, counts, scorer_factory, np.arange(len(counts) + 1))
 
@@ -39,7 +39,7 @@ def test_benchmark_segmentation_candidates(benchmark):
     counts = np.concatenate([np.random.poisson(15, 50000),
                              np.random.poisson(20, 50000)])
 
-    scorer_factory = lambda counts, split_candidates : pasio.LogMarginalLikelyhoodComputer(
+    scorer_factory = lambda counts, split_candidates : pasio.LogMarginalLikelyhoodIntAlphaComputer(
         counts, 1, 1, split_candidates)
     candidates = np.hstack([np.arange(0, len(counts), 100), 100000])
     result = benchmark(segmentation, counts, scorer_factory, candidates)
@@ -47,7 +47,7 @@ def test_benchmark_segmentation_candidates(benchmark):
 def test_benchmark_log_marginal_likehood(benchmark):
     counts = np.concatenate([np.random.poisson(200, 50),
                              np.random.poisson(20, 50)])
-    scorer = pasio.LogMarginalLikelyhoodComputer(counts, 1, 1, np.arange(101))
+    scorer = pasio.LogMarginalLikelyhoodIntAlphaComputer(counts, 1, 1, np.arange(101))
 
     result = benchmark(compute_log_marginal_likelyhood2,
                        scorer, len(counts))
