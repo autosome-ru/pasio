@@ -121,7 +121,7 @@ cdef class SquareSplitter:
         split_indices = SquareSplitter.collect_split_points(previous_splits)
         # but we want to return contig positions of these splits
         split_positions = split_candidates[split_indices]
-        return prefix_scores[num_split_candidates - 1], split_positions
+        return prefix_scores_view[num_split_candidates_int - 1], split_positions
 
     @staticmethod
     def collect_split_points(previous_splits):
