@@ -2,7 +2,7 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from .cython_log_marginal_likelyhood cimport LogMarginalLikelyhoodComputer
+from .cython_log_marginal_likelyhood cimport BasicLogMarginalLikelyhoodComputer
 
 cdef class SquareSplitter:
     cdef object scorer_factory
@@ -75,7 +75,7 @@ cdef class SquareSplitter:
         return prefix_scores[num_split_candidates - 1], split_positions
 
     cpdef split_without_normalizations(self, np.ndarray counts, np.ndarray split_candidates):
-        score_computer = self.scorer(counts, split_candidates)
+        cdef BasicLogMarginalLikelyhoodComputer score_computer = self.scorer(counts, split_candidates)
 
         num_split_candidates = len(split_candidates)
         cdef Py_ssize_t num_split_candidates_int = len(split_candidates)

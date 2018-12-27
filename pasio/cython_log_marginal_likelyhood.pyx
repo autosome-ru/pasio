@@ -45,7 +45,19 @@ def assert_correct_split_candidates(split_candidates, counts):
     assert np.all(split_candidates[1:] > split_candidates[:last_idx]) # strictly ascending
 
 # Indexing of LogMarginalLikelyhoodComputer iterates over split candidates, not counts
-cdef class LogMarginalLikelyhoodComputer:
+cdef class BasicLogMarginalLikelyhoodComputer:
+    # marginal likelihoods for segments [i, stop) for all i < stop.
+    # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
+    # These scores are not corrected for constant penalty for segment creation
+    cpdef np.ndarray all_suffixes_self_score(self, Py_ssize_t stop):
+        cdef np.ndarray result = np.empty(stop, dtype=float)
+        self.all_suffixes_self_score_in_place(stop, result)
+        return result
+
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
+        raise NotImplementedError()
+
+cdef class LogMarginalLikelyhoodComputer(BasicLogMarginalLikelyhoodComputer):
     def __init__(self, counts, alpha, beta, split_candidates, log_computer=None, log_gamma_computer=None, log_gamma_alpha_computer=None):
         self.alpha = alpha
 
@@ -101,17 +113,6 @@ cdef class LogMarginalLikelyhoodComputer:
         return self.self_score(0, len(self.split_candidates) - 1)
     def score_no_splits(self):
         return self.self_score_no_splits() + self.segment_creation_cost
-
-    # marginal likelihoods for segments [i, stop) for all i < stop.
-    # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
-    # These scores are not corrected for constant penalty for segment creation
-    cpdef np.ndarray all_suffixes_self_score(self, Py_ssize_t stop):
-        cdef np.ndarray result = np.empty(stop, dtype=float)
-        self.all_suffixes_self_score_in_place(stop, result)
-        return result
-
-    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
-        raise NotImplementedError()
 
 
 cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
