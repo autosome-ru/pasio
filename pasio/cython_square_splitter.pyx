@@ -35,7 +35,7 @@ cdef class SquareSplitter:
         else:
             return self.split_with_normalizations(counts, split_candidates)
 
-    cpdef split_with_normalizations(self, counts, split_candidates):
+    cpdef split_with_normalizations(self, np.ndarray counts, np.ndarray split_candidates):
         score_computer = self.scorer(counts, split_candidates)
         num_split_candidates = len(split_candidates)
 
@@ -74,7 +74,7 @@ cdef class SquareSplitter:
         split_positions = split_candidates[split_indices]
         return prefix_scores[num_split_candidates - 1], split_positions
 
-    cpdef split_without_normalizations(self, counts, split_candidates):
+    cpdef split_without_normalizations(self, np.ndarray counts, np.ndarray split_candidates):
         score_computer = self.scorer(counts, split_candidates)
 
         num_split_candidates = len(split_candidates)
