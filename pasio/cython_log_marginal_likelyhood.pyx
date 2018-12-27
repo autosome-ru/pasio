@@ -122,22 +122,26 @@ cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
 
     cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
         cdef Py_ssize_t i
-        cdef long long[::1] cumsum_view = self.cumsum
-        cdef long[::1] split_candidates_view = self.split_candidates
-
-        cdef long long cumsum_last = cumsum_view[stop]
-        cdef long long cumsum_last_shifted = self.int_alpha + cumsum_last
-        cdef long split_candidates_last = split_candidates_view[stop]
-        cdef long segment_length
-        cdef long long shifted_segment_count
+        cdef bint log_gamma_fully_cached, log_fully_cached
+        cdef long split_candidates_last, segment_length
+        cdef long long cumsum_last, cumsum_last_shifted, shifted_segment_count
         cdef double add, sub
+        cdef long[::1] split_candidates_view
+        cdef long long[::1] cumsum_view
+        cdef double[::1] log_gamma_view, log_view
 
-        cdef bint log_gamma_fully_cached = (cumsum_last_shifted < self.log_gamma_computer.cache_size)
-        cdef bint log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
-
+        cumsum_view = self.cumsum
+        split_candidates_view = self.split_candidates
         # direct memory access is much more efficient than even inlined method call
-        cdef double[::1] log_gamma_view = self.log_gamma_computer.precomputed_view
-        cdef double[::1] log_view = self.log_computer.precomputed_view
+        log_gamma_view = self.log_gamma_computer.precomputed_view
+        log_view = self.log_computer.precomputed_view
+
+        cumsum_last = cumsum_view[stop]
+        cumsum_last_shifted = self.int_alpha + cumsum_last
+        split_candidates_last = split_candidates_view[stop]
+
+        log_gamma_fully_cached = (cumsum_last_shifted < self.log_gamma_computer.cache_size)
+        log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
 
         if log_gamma_fully_cached and log_fully_cached:
             for i in range(stop):
@@ -175,23 +179,27 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
 
     cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
         cdef Py_ssize_t i
-        cdef long long[::1] cumsum_view = self.cumsum
-        cdef long[::1] split_candidates_view = self.split_candidates
+        cdef bint log_gamma_alpha_fully_cached, log_fully_cached
+        cdef long split_candidates_last, segment_length
+        cdef long long cumsum_last, segment_count
+        cdef double cumsum_last_shifted, shifted_segment_count, add, sub
+        cdef long[::1] split_candidates_view
+        cdef long long[::1] cumsum_view
+        cdef double[::1] log_gamma_alpha_view, log_view
 
-        cdef long long cumsum_last = cumsum_view[stop]
-        cdef double cumsum_last_shifted = self.real_alpha + cumsum_last
-        cdef long split_candidates_last = split_candidates_view[stop]
-        cdef long segment_length
-        cdef long long segment_count
-        cdef double shifted_segment_count
-        cdef double add, sub
-
-        cdef bint log_gamma_alpha_fully_cached = (cumsum_last < self.log_gamma_alpha_computer.cache_size)
-        cdef bint log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
-
+        cumsum_view = self.cumsum
+        split_candidates_view = self.split_candidates
         # direct memory access is much more efficient than even inlined method call
-        cdef double[::1] log_gamma_alpha_view = self.log_gamma_alpha_computer.precomputed_view
-        cdef double[::1] log_view = self.log_computer.precomputed_view
+        log_gamma_alpha_view = self.log_gamma_alpha_computer.precomputed_view
+        log_view = self.log_computer.precomputed_view
+
+        cumsum_last = cumsum_view[stop]
+        cumsum_last_shifted = self.real_alpha + cumsum_last
+        split_candidates_last = split_candidates_view[stop]
+
+        log_gamma_alpha_fully_cached = (cumsum_last < self.log_gamma_alpha_computer.cache_size)
+        log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
+
 
         if log_gamma_alpha_fully_cached and log_fully_cached:
             for i in range(stop):
