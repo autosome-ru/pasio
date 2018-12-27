@@ -75,6 +75,8 @@ cdef class LogMarginalLikelyhoodComputer(BasicLogMarginalLikelyhoodComputer):
         self.logfac_cumsum = np.hstack([0, np.cumsum(count_logfacs)])[split_candidates]
 
         self.segment_creation_cost = alpha * self.log_computer.compute_for_number(0) - self.log_gamma_alpha_computer.compute_for_number(0)
+        self.cumsum_view = self.cumsum
+        self.split_candidates_view = self.split_candidates
 
     def total_sum_logfac(self):
         last_idx = len(self.logfac_cumsum) - 1
@@ -130,12 +132,11 @@ cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
         cdef long long[::1] cumsum_view
         cdef double[::1] log_gamma_view, log_view
 
-        cumsum_view = self.cumsum
-        split_candidates_view = self.split_candidates
+        cumsum_view = self.cumsum_view
+        split_candidates_view = self.split_candidates_view
         # direct memory access is much more efficient than even inlined method call
         log_gamma_view = self.log_gamma_computer.precomputed_view
         log_view = self.log_computer.precomputed_view
-
         cumsum_last = cumsum_view[stop]
         cumsum_last_shifted = self.int_alpha + cumsum_last
         split_candidates_last = split_candidates_view[stop]
@@ -187,8 +188,8 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
         cdef long long[::1] cumsum_view
         cdef double[::1] log_gamma_alpha_view, log_view
 
-        cumsum_view = self.cumsum
-        split_candidates_view = self.split_candidates
+        cumsum_view = self.cumsum_view
+        split_candidates_view = self.split_candidates_view
         # direct memory access is much more efficient than even inlined method call
         log_gamma_alpha_view = self.log_gamma_alpha_computer.precomputed_view
         log_view = self.log_computer.precomputed_view
@@ -199,7 +200,6 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
 
         log_gamma_alpha_fully_cached = (cumsum_last < self.log_gamma_alpha_computer.cache_size)
         log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
-
 
         if log_gamma_alpha_fully_cached and log_fully_cached:
             for i in range(stop):

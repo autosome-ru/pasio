@@ -14,6 +14,8 @@ cdef class LogMarginalLikelyhoodComputer(BasicLogMarginalLikelyhoodComputer):
     cdef LogGammaComputer log_gamma_alpha_computer
     cdef np.ndarray split_candidates
     cdef np.ndarray cumsum, logfac_cumsum
+    cdef long[::1] split_candidates_view
+    cdef long long[::1] cumsum_view
 
 cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
     cdef unsigned int int_alpha
