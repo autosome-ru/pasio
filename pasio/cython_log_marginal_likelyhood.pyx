@@ -1,3 +1,4 @@
+# cython: boundscheck=False, wraparound=False, initializedcheck=False
 from __future__ import division
 import numpy as np
 cimport numpy as np
@@ -39,8 +40,9 @@ def assert_correct_counts(counts):
 def assert_correct_split_candidates(split_candidates, counts):
     assert isinstance(split_candidates, np.ndarray)
     assert split_candidates[0] == 0
-    assert split_candidates[-1] == len(counts)
-    assert np.all(split_candidates[1:] > split_candidates[:-1]) # strictly ascending
+    last_idx = len(split_candidates) - 1
+    assert split_candidates[last_idx] == len(counts)
+    assert np.all(split_candidates[1:] > split_candidates[:last_idx]) # strictly ascending
 
 # Indexing of LogMarginalLikelyhoodComputer iterates over split candidates, not counts
 cdef class LogMarginalLikelyhoodComputer:
@@ -63,7 +65,8 @@ cdef class LogMarginalLikelyhoodComputer:
         self.segment_creation_cost = alpha * self.log_computer.compute_for_number(0) - self.log_gamma_alpha_computer.compute_for_number(0)
 
     def total_sum_logfac(self):
-        return self.logfac_cumsum[-1]
+        last_idx = len(self.logfac_cumsum) - 1
+        return self.logfac_cumsum[last_idx]
 
     def scores(self):
         segment_lengths = np.diff(self.split_candidates)
@@ -102,8 +105,6 @@ cdef class LogMarginalLikelyhoodComputer:
     # marginal likelihoods for segments [i, stop) for all i < stop.
     # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
     # These scores are not corrected for constant penalty for segment creation
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef np.ndarray all_suffixes_self_score(self, int stop):
         cdef np.ndarray result = np.empty(stop, dtype=float)
         self.all_suffixes_self_score_in_place(stop, result)
@@ -118,8 +119,6 @@ cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
         super(LogMarginalLikelyhoodIntAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.int_alpha = alpha
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
         cdef int i
         cdef long[::1] cumsum_view = self.cumsum
@@ -172,8 +171,6 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
         super(LogMarginalLikelyhoodRealAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.real_alpha = alpha
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
         cdef int i
         cdef long[::1] cumsum_view = self.cumsum

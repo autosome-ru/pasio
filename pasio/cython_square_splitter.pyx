@@ -1,3 +1,4 @@
+# cython: boundscheck=False, wraparound=False, initializedcheck=False
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -71,10 +72,8 @@ cdef class SquareSplitter:
 
         split_indices = SquareSplitter.collect_split_points(previous_splits)
         split_positions = split_candidates[split_indices]
-        return prefix_scores[-1], split_positions
+        return prefix_scores[num_split_candidates - 1], split_positions
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef split_without_normalizations(self, counts, split_candidates):
         score_computer = self.scorer(counts, split_candidates)
 
