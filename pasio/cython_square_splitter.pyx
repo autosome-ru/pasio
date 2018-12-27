@@ -103,7 +103,7 @@ cdef class SquareSplitter:
         # (indexation runs over split candidates, not over all points)
         for prefix_end in range(1, num_split_candidates_int):
             # score consists of (a) score of the last segment
-            score_computer.all_suffixes_self_score_in_place(prefix_end, score_if_last_split_at)
+            score_computer.all_suffixes_self_score_in_place(prefix_end, score_if_last_split_at_view)
             #                   (b) score of the prefix before the last segment
             max_score = score_if_last_split_at_view[0] + prefix_scores_view[0]
             optimal_last_split = 0
