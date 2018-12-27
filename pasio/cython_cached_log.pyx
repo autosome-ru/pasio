@@ -14,7 +14,7 @@ cdef class LogComputer:
         self.precomputed = np.log(np.arange(cache_size) + shift)
         self.precomputed_view = self.precomputed
 
-    cpdef double compute_for_number(self, int x):
+    cpdef double compute_for_number(self, Py_ssize_t x):
         if x < self.cache_size:
             return self.precomputed_view[x]
         else:
@@ -28,10 +28,10 @@ cdef class LogComputer:
             return self.compute_for_array_unbound(xs)
 
     cpdef object compute_for_array_unbound(self, np.ndarray xs):
-        cdef int i
-        cdef int val
+        cdef Py_ssize_t i
+        cdef Py_ssize_t val
         cdef double[::1] result_view
-        cdef long[::1] xs_view = xs
+        cdef Py_ssize_t[::1] xs_view = xs
         len_x = len(xs_view)
         result = np.empty(len_x, dtype=float)
         result_view = result
@@ -51,7 +51,7 @@ cdef class LogGammaComputer:
         self.precomputed = scipy.special.gammaln(np.arange(self.cache_size) + shift)
         self.precomputed_view = self.precomputed
 
-    cpdef double compute_for_number(self, int x):
+    cpdef double compute_for_number(self, Py_ssize_t x):
         if x < self.cache_size:
             return self.precomputed_view[x]
         else:
@@ -65,10 +65,10 @@ cdef class LogGammaComputer:
             return self.compute_for_array_unbound(x)
 
     cpdef object compute_for_array_unbound(self, np.ndarray xs):
-        cdef int i
-        cdef int val
+        cdef Py_ssize_t i
+        cdef Py_ssize_t val
         cdef double[::1] result_view
-        cdef long[::1] xs_view = xs
+        cdef Py_ssize_t[::1] xs_view = xs
         len_x = len(xs_view)
         result = np.empty(len_x, dtype=float)
         result_view = result

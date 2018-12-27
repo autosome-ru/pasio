@@ -9,15 +9,15 @@ cdef class LogMarginalLikelyhoodComputer:
     cdef np.ndarray split_candidates
     cdef np.ndarray cumsum, logfac_cumsum
     cdef readonly double segment_creation_cost
-    cpdef np.ndarray all_suffixes_self_score(self, int stop)
+    cpdef np.ndarray all_suffixes_self_score(self, Py_ssize_t stop)
 
     # Empty implementation to be redefined in subclasses
-    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view)
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view)
 
 cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
-    cdef int int_alpha
-    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view)
+    cdef unsigned int int_alpha
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view)
 
 cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer):
     cdef double real_alpha
-    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view)
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view)

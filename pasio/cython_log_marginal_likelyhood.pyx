@@ -105,12 +105,12 @@ cdef class LogMarginalLikelyhoodComputer:
     # marginal likelihoods for segments [i, stop) for all i < stop.
     # [i, stop) means that segment boundaries are ... i - 1][i ...... stop - 1][stop ...
     # These scores are not corrected for constant penalty for segment creation
-    cpdef np.ndarray all_suffixes_self_score(self, int stop):
+    cpdef np.ndarray all_suffixes_self_score(self, Py_ssize_t stop):
         cdef np.ndarray result = np.empty(stop, dtype=float)
         self.all_suffixes_self_score_in_place(stop, result)
         return result
 
-    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
         raise NotImplementedError()
 
 
@@ -119,18 +119,19 @@ cdef class LogMarginalLikelyhoodIntAlphaComputer(LogMarginalLikelyhoodComputer):
         super(LogMarginalLikelyhoodIntAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.int_alpha = alpha
 
-    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
-        cdef int i
-        cdef long[::1] cumsum_view = self.cumsum
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
+        cdef Py_ssize_t i
+        cdef long long[::1] cumsum_view = self.cumsum
         cdef long[::1] split_candidates_view = self.split_candidates
 
-        cdef int cumsum_last = cumsum_view[stop]
-        cdef int cumsum_last_shifted = self.int_alpha + cumsum_last
-        cdef int split_candidates_last = split_candidates_view[stop]
-        cdef int shifted_segment_count, segment_length
+        cdef long long cumsum_last = cumsum_view[stop]
+        cdef long long cumsum_last_shifted = self.int_alpha + cumsum_last
+        cdef long split_candidates_last = split_candidates_view[stop]
+        cdef long segment_length
+        cdef long long shifted_segment_count
         cdef double add, sub
 
-        cdef bint log_gamma_fully_cached = (self.int_alpha + cumsum_last < self.log_gamma_computer.cache_size)
+        cdef bint log_gamma_fully_cached = (cumsum_last_shifted < self.log_gamma_computer.cache_size)
         cdef bint log_fully_cached = (split_candidates_last < self.log_computer.cache_size)
 
         # direct memory access is much more efficient than even inlined method call
@@ -171,16 +172,16 @@ cdef class LogMarginalLikelyhoodRealAlphaComputer(LogMarginalLikelyhoodComputer)
         super(LogMarginalLikelyhoodRealAlphaComputer, self).__init__(counts, alpha, beta, split_candidates, log_computer, log_gamma_computer, log_gamma_alpha_computer)
         self.real_alpha = alpha
 
-    cpdef void all_suffixes_self_score_in_place(self, int stop, double[::1] result_view):
-        cdef int i
-        cdef long[::1] cumsum_view = self.cumsum
+    cpdef void all_suffixes_self_score_in_place(self, Py_ssize_t stop, double[::1] result_view):
+        cdef Py_ssize_t i
+        cdef long long[::1] cumsum_view = self.cumsum
         cdef long[::1] split_candidates_view = self.split_candidates
 
-        cdef int cumsum_last = cumsum_view[stop]
+        cdef long long cumsum_last = cumsum_view[stop]
         cdef double cumsum_last_shifted = self.real_alpha + cumsum_last
-        cdef int split_candidates_last = split_candidates_view[stop]
-        cdef int segment_length
-        cdef int segment_count
+        cdef long split_candidates_last = split_candidates_view[stop]
+        cdef long segment_length
+        cdef long long segment_count
         cdef double shifted_segment_count
         cdef double add, sub
 

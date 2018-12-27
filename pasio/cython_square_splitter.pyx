@@ -78,7 +78,7 @@ cdef class SquareSplitter:
         score_computer = self.scorer(counts, split_candidates)
 
         num_split_candidates = len(split_candidates)
-        cdef int num_split_candidates_int = len(split_candidates)
+        cdef Py_ssize_t num_split_candidates_int = len(split_candidates)
 
         # prefix_scores[i] is the best score of prefix [0; i)
         cdef np.ndarray prefix_scores = np.empty(num_split_candidates)
@@ -89,13 +89,13 @@ cdef class SquareSplitter:
         # in the best segmentation of prefix [0, i) which is not the end of the prefix
         # i.e. this prefix segmentation looks like `...... ps - 1) [ps ... i - 1)`
         cdef np.ndarray previous_splits = np.empty(num_split_candidates, dtype=int)
-        cdef long[::1] previous_splits_view = previous_splits
+        cdef Py_ssize_t[::1] previous_splits_view = previous_splits
         previous_splits_view[0] = 0
 
         cdef np.ndarray score_if_last_split_at = np.empty(num_split_candidates, dtype=float)
         cdef double[::1] score_if_last_split_at_view = score_if_last_split_at
 
-        cdef int prefix_end, last_split_pos, optimal_last_split
+        cdef Py_ssize_t prefix_end, last_split_pos, optimal_last_split
         cdef double cur_score, max_score
 
         # find the score and previous point of the best segmentation of the prefix [0, prefix_end)
