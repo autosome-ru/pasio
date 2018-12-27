@@ -1,3 +1,4 @@
+# cython: boundscheck=False, wraparound=False, initializedcheck=False
 import numpy as np
 import scipy.special
 cimport cython
@@ -13,24 +14,7 @@ cdef class LogComputer:
         self.precomputed = np.log(np.arange(cache_size) + shift)
         self.precomputed_view = self.precomputed
 
-    # Note that it's faster to access view directly without method call (even though it's inlined)
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    cdef inline double compute_for_number_cached(self, int x) nogil:
-        return self.precomputed_view[x]
-
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef double compute_for_number(self, int x):
-        if x < self.cache_size:
-            return self.precomputed_view[x]
-        else:
-            return libc.math.log(<double>x + self.shift)
-
-    # This method is the same as compute_for_number but doesn't add overhead of python wrapper
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    cdef inline double compute_for_number_cython(self, int x) nogil:
         if x < self.cache_size:
             return self.precomputed_view[x]
         else:
@@ -67,24 +51,7 @@ cdef class LogGammaComputer:
         self.precomputed = scipy.special.gammaln(np.arange(self.cache_size) + shift)
         self.precomputed_view = self.precomputed
 
-    # Note that it's faster to access view directly without method call (even though it's inlined)
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    cdef inline double compute_for_number_cached(self, int x) nogil:
-        return self.precomputed_view[x]
-
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cpdef double compute_for_number(self, int x):
-        if x < self.cache_size:
-            return self.precomputed_view[x]
-        else:
-            return scipy_special_python.gammaln(<double>x + self.shift)
-
-    # This method is the same as compute_for_number but doesn't add overhead of python wrapper
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    cdef inline double compute_for_number_cython(self, int x) nogil:
         if x < self.cache_size:
             return self.precomputed_view[x]
         else:
