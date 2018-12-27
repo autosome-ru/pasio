@@ -13,5 +13,5 @@ extensions = [
 ]
 
 setup(
-    ext_modules = cythonize(extensions)
+    ext_modules = cythonize(extensions, compiler_directives={'language_level': '2'})
 )
