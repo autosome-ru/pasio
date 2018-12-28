@@ -78,7 +78,7 @@ cdef class SquareSplitter:
         cdef BasicLogMarginalLikelyhoodComputer score_computer = self.scorer(counts, split_candidates)
 
         num_split_candidates = len(split_candidates)
-        cdef Py_ssize_t num_split_candidates_int = len(split_candidates)
+        cdef Py_ssize_t num_split_candidates_int = num_split_candidates
 
         # prefix_scores[i] is the best score of prefix [0; i)
         cdef np.ndarray prefix_scores = np.empty(num_split_candidates)
