@@ -1,0 +1,5 @@
+numpy
+scipy
+future
+pytest
+pytest-benchmark

@@ -2,9 +2,8 @@ import argparse
 import os
 import logging
 import tempfile
-import sys
 
-import pasio
+from .context import pasio
 
 logger = logging.getLogger(__name__)
 stderr = logging.StreamHandler()
