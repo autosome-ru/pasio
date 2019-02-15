@@ -12,7 +12,7 @@ The only dependencies are numpy and scipy.
 Recommended command line for most practical cases is:
 
 ```
-python src/pasio.py
+python -m pasio
       --bedgraph <PATH TO INPUT bedGraph FILE> -o <PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1
       --no_split_constant
@@ -73,7 +73,7 @@ Splits denote segment boundaries to the left of position. Adjacent splits `a` an
 E.g. for coverage counts `[99,99,99, 1,1,1]` splits should be `[0, 3, 6]`.
 So that we have two segments: `[0, 3)` and `[3, 6)`.
 
-It's guaranted that splits and split candidates are stored as numpy arrays and always include the points just before and after the contig.
+Splits and split candidates are stored as numpy arrays and always include both inner split points and segment boundaries, i.e. point just before config start and right after the contig end.
 
 One can also treat splits as positions between-elements (like in python slices)
 ```
