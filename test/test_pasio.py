@@ -242,6 +242,7 @@ def test_bedgraph_reader(tmpdir):
         chr2 50 60 0
         ''')
     chromosomes = {k:v for (k,v,l) in pasio.parse_bedgraph(str(bedgraph_file))}
+    print(list(pasio.parse_bedgraph(str(bedgraph_file))))
     assert len(chromosomes) == 2
     assert len(chromosomes['chr1']) == 50
     assert np.all(chromosomes['chr1'][0:10] == 0)
