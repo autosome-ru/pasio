@@ -9,9 +9,10 @@ def parse_bedgraph(filename):
     previous_chrom = None
     with open(filename) as bedgraph_file:
         for line in bedgraph_file:
-            if line.strip() == '':
+            line = line.strip()
+            if line == '':
                 continue
-            chrom, start, stop, coverage = line.strip().split()[0:4]
+            chrom, start, stop, coverage = line.split()[0:4]
             start = int(start)
             stop = int(stop)
             coverage = int(coverage)
