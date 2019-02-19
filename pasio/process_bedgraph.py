@@ -1,5 +1,6 @@
 import numpy as np
 from .logging import logger
+import itertools
 
 def bedgraph_intervals(filename):
     with open(filename) as bedgraph_file:
@@ -13,26 +14,24 @@ def bedgraph_intervals(filename):
             coverage = int(coverage)
             yield (chrom, start, stop, coverage)
 
+def group_by_chromosome(intervals):
+    return itertools.groupby(intervals, key=lambda (chrom, start, stop, coverage): chrom)
+
 def parse_bedgraph(filename):
     '''
         yields pointwise profiles grouped by chromosome in form (chrom, profile, chromosome_start)
     '''
-    chromosome_data = None
-    previous_chrom = None
-    for (chrom, start, stop, coverage) in bedgraph_intervals(filename):
-        if chrom != previous_chrom:
-            if previous_chrom is not None:
-                # overwrite chromosome_data not to retain both list and np.array in memory
-                # and let the former be garbage collected
-                chromosome_data = np.array(chromosome_data, dtype=int)
-                yield previous_chrom, chromosome_data, chromosome_start
-            chromosome_data = []
-            chromosome_start = start
-        chromosome_data.extend([coverage]*(stop-start))
-        previous_chrom = chrom
-    chromosome_data = np.array(chromosome_data, dtype=int)
-    yield chrom, chromosome_data, chromosome_start
-
+    for chromosome, intervals in group_by_chromosome(bedgraph_intervals(filename)):
+        chromosome_start = None
+        chromosome_data = []
+        for (_, start, stop, coverage) in intervals:
+            if chromosome_start is None:
+                chromosome_start = start
+            chromosome_data.extend([coverage]*(stop-start))
+        # overwrite chromosome_data not to retain both list and np.array in memory
+        # and let the former be garbage collected
+        chromosome_data = np.array(chromosome_data, dtype=int)
+        yield chromosome, chromosome_data, chromosome_start
 
 def split_bedgraph(in_filename, out_filename, splitter):
     with open(out_filename, 'w') as outfile:
