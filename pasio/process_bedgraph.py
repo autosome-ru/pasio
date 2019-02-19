@@ -1,12 +1,7 @@
 import numpy as np
 from .logging import logger
 
-def parse_bedgraph(filename):
-    '''
-        yields pointwise profiles grouped by chromosome in form (chrom, profile, chromosome_start)
-    '''
-    chromosome_data = None
-    previous_chrom = None
+def bedgraph_intervals(filename):
     with open(filename) as bedgraph_file:
         for line in bedgraph_file:
             line = line.strip()
@@ -16,18 +11,27 @@ def parse_bedgraph(filename):
             start = int(start)
             stop = int(stop)
             coverage = int(coverage)
-            if chrom != previous_chrom:
-                if previous_chrom is not None:
-                    # overwrite chromosome_data not to retain both list and np.array in memory
-                    # and let the former be garbage collected
-                    chromosome_data = np.array(chromosome_data, dtype=int)
-                    yield previous_chrom, chromosome_data, chromosome_start
-                chromosome_data = []
-                chromosome_start = start
-            chromosome_data.extend([coverage]*(stop-start))
-            previous_chrom = chrom
-        chromosome_data = np.array(chromosome_data, dtype=int)
-        yield chrom, chromosome_data, chromosome_start
+            yield (chrom, start, stop, coverage)
+
+def parse_bedgraph(filename):
+    '''
+        yields pointwise profiles grouped by chromosome in form (chrom, profile, chromosome_start)
+    '''
+    chromosome_data = None
+    previous_chrom = None
+    for (chrom, start, stop, coverage) in bedgraph_intervals(filename):
+        if chrom != previous_chrom:
+            if previous_chrom is not None:
+                # overwrite chromosome_data not to retain both list and np.array in memory
+                # and let the former be garbage collected
+                chromosome_data = np.array(chromosome_data, dtype=int)
+                yield previous_chrom, chromosome_data, chromosome_start
+            chromosome_data = []
+            chromosome_start = start
+        chromosome_data.extend([coverage]*(stop-start))
+        previous_chrom = chrom
+    chromosome_data = np.array(chromosome_data, dtype=int)
+    yield chrom, chromosome_data, chromosome_start
 
 
 def split_bedgraph(in_filename, out_filename, splitter):
