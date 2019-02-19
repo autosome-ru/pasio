@@ -11,7 +11,7 @@ def parse_bedgraph(filename):
         for line in bedgraph_file:
             if line.strip() == '':
                 continue
-            chrom, start, stop, coverage = line.strip().split()
+            chrom, start, stop, coverage = line.strip().split()[0:4]
             start = int(start)
             stop = int(stop)
             coverage = int(coverage)
