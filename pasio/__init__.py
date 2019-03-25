@@ -7,6 +7,7 @@ from .log_marginal_likelyhood import LogMarginalLikelyhoodComputer, LogMarginalL
 from .cached_log import LogComputer, LogGammaComputer
 from .nop_splitter import NopSplitter
 from .process_bedgraph import parse_bedgraph, split_bedgraph
+from .slice_when import slice_when
 
 __all__ = [
     SquareSplitter,
@@ -17,5 +18,6 @@ __all__ = [
     NopSplitter,
     LogComputer, LogGammaComputer,
     LogMarginalLikelyhoodComputer, LogMarginalLikelyhoodIntAlphaComputer, LogMarginalLikelyhoodRealAlphaComputer, ScorerFactory,
-    parse_bedgraph, split_bedgraph
+    parse_bedgraph, split_bedgraph,
+    slice_when,
 ]

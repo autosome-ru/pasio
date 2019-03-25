@@ -54,8 +54,11 @@ python pasio.py
                            If not set, run until no split points removed''')
     argparser.add_argument('--no_split_constant', action='store_true',
                            help = '''[experimental] If set, won't put splits between constant counts''')
+    argparser.add_argument('--split_at_gaps', action='store_true',
+                           help = 'By default gaps between intervals are filled with zeros.\n' +
+                                  'Split at gaps overrides this behavior so that\n' +
+                                  'non-adjacent intervals are segmented independently.')
     return argparser
-
 
 def configure_splitter(args):
     if args.algorithm in ['slidingwindow', 'rounds']:
@@ -116,4 +119,4 @@ def main():
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(args)
     logger.info('Starting Pasio with args'+str(args))
-    split_bedgraph(args.bedgraph, args.out_bedgraph, splitter)
+    split_bedgraph(args.bedgraph, args.out_bedgraph, splitter, split_at_gaps=args.split_at_gaps)
