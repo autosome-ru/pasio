@@ -84,7 +84,7 @@ def split_bedgraph(in_filename, out_filename, splitter, split_at_gaps):
             logger.info('chrom %s finished, score %f, number of splits %d. '
                         'Log likelyhood: %f.'% (chrom, score, len(splits), log_likelyhood))
             logger.info('Starting output of chrom %s' % chrom)
-            for i, (start, stop, mean_count, log_marginal_likelyhood) in enumerate(zip(splits, splits[1:], scorer.mean_counts(), scorer.log_marginal_likelyhoods())):
+            for (start, stop, mean_count, log_marginal_likelyhood) in zip(splits, splits[1:], scorer.mean_counts(), scorer.log_marginal_likelyhoods()):
                 outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
                                                             start+chrom_start,
                                                             stop+chrom_start,
