@@ -10,14 +10,14 @@ from .process_bedgraph import parse_bedgraph, split_bedgraph
 from .slice_when import slice_when
 
 __all__ = [
-    SquareSplitter,
-    RoundReducer,
-    SlidingWindow, SlidingWindowReducer,
-    NotConstantReducer, NotZeroReducer,
-    ReducerCombiner,
-    NopSplitter,
-    LogComputer, LogGammaComputer,
-    LogMarginalLikelyhoodComputer, LogMarginalLikelyhoodIntAlphaComputer, LogMarginalLikelyhoodRealAlphaComputer, ScorerFactory,
-    parse_bedgraph, split_bedgraph,
-    slice_when,
+    'SquareSplitter',
+    'RoundReducer',
+    'SlidingWindow', 'SlidingWindowReducer',
+    'NotConstantReducer', 'NotZeroReducer',
+    'ReducerCombiner',
+    'NopSplitter',
+    'LogComputer', 'LogGammaComputer',
+    'LogMarginalLikelyhoodComputer', 'LogMarginalLikelyhoodIntAlphaComputer', 'LogMarginalLikelyhoodRealAlphaComputer', 'ScorerFactory',
+    'parse_bedgraph', 'split_bedgraph',
+    'slice_when',
 ]
