@@ -10,7 +10,7 @@ class SlidingWindow:
 
     def windows(self, arr):
         length = len(arr)
-        for start in range(0, length, self.window_shift):
+        for start in range(0, length - 1, self.window_shift):
             stop = min(start + self.window_size + 1, length)
             completion = stop / length
             # start inclusive, stop exclusive
