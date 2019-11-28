@@ -1,0 +1,10 @@
+*/__pycache__/
+*.pyc
+*.log
+*.bedGraph
+dist/
+*.egg-info
+*.egg
+.dist-info/
+.venv/
+build/
