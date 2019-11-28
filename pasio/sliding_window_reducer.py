@@ -1,5 +1,5 @@
 from __future__ import division
-from builtins import range
+from future.builtins import range
 import numpy as np
 from .logging import logger, logging_filter
 
