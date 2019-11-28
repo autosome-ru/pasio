@@ -1,4 +1,4 @@
-from .pasio_parallel_wrapper import split_by_chromosomes_and_get_sizes
+from pasio_parallel_wrapper import split_by_chromosomes_and_get_sizes
 
 import tempfile
 import os

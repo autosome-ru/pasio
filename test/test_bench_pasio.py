@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from .context import pasio
+import pasio
 import random
 
 

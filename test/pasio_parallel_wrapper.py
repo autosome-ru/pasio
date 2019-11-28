@@ -3,7 +3,7 @@ import os
 import logging
 import tempfile
 
-from .context import pasio
+import pasio
 
 logger = logging.getLogger(__name__)
 stderr = logging.StreamHandler()

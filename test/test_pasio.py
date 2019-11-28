@@ -1,5 +1,5 @@
 import pytest
-from .context import pasio
+import pasio
 import numpy as np
 import math
 import functools
