@@ -8,6 +8,7 @@ from .cached_log import LogComputer, LogGammaComputer
 from .nop_splitter import NopSplitter
 from .process_bedgraph import parse_bedgraph, split_bedgraph
 from .slice_when import slice_when
+from .version import __version__
 
 __all__ = [
     'SquareSplitter',
