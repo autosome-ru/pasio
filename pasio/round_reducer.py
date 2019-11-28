@@ -12,6 +12,7 @@ class RoundReducer:
             num_rounds = len(counts)
         else:
             num_rounds = self.num_rounds
+        num_rounds = max(1, num_rounds)
 
         for round_ in range(1, num_rounds + 1):
             logging_filter.put_to_context('round', round_)

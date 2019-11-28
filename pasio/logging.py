@@ -9,7 +9,8 @@ class LoggingContextFilter:
         self.context[key] = value
 
     def remove_from_context(self, key):
-        del self.context[key]
+        if key in self.context:
+            del self.context[key]
 
     def filter(self, record):
         if 'window' in self.context:
