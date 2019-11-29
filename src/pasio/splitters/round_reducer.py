@@ -1,6 +1,6 @@
 from future.builtins import range
 import numpy as np
-from .logging import logger, logging_filter
+from ..logging import logger, logging_filter
 
 class RoundReducer:
     def __init__(self, base_reducer, num_rounds=None):

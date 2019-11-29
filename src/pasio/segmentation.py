@@ -1,6 +1,6 @@
 import numpy as np
 from .logging import logger
-from .intervals import ScoredInterval
+from .dto.intervals import ScoredInterval
 
 def segments_with_scores(profile, splitter):
     logger.info('Starting splitting profile of length %d' % len(profile))

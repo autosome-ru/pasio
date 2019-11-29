@@ -1,4 +1,4 @@
-from pasio import slice_when
+from pasio.utils.slice_when import slice_when
 
 def test_slice_when():
     big_diff = lambda x,y: x + 1 < y

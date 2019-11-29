@@ -1,5 +1,5 @@
 import numpy as np
-from .logging import logger
+from ..logging import logger
 
 class NotZeroReducer:
     def reduce_candidate_list(self, counts, split_candidates):

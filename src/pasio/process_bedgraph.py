@@ -1,9 +1,9 @@
 import numpy as np
 from .logging import logger
 import itertools
-from .slice_when import slice_when
+from .utils.slice_when import slice_when
 from .segmentation import segments_with_scores
-from .intervals import BedgraphInterval
+from .dto.intervals import BedgraphInterval
 
 def fill_interval_gaps(intervals):
     previous_stop = None
