@@ -1,5 +1,6 @@
 import numpy as np
 from .logging import logger
+from .intervals import ScoredInterval
 
 def segments_with_scores(profile, splitter):
     logger.info('Starting splitting profile of length %d' % len(profile))
@@ -16,4 +17,4 @@ def segments_with_scores(profile, splitter):
                             scorer.log_marginal_likelyhoods())
     logger.info('Scores calculated')
     for (start, stop, mean_count, log_marginal_likelyhood) in segment_iterator:
-        yield (start, stop, mean_count, log_marginal_likelyhood)
+        yield ScoredInterval(start, stop, mean_count, log_marginal_likelyhood)
