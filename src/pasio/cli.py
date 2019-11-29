@@ -26,28 +26,28 @@ python pasio.py
                            help="alpha parameter of gamma distribution")
     argparser.add_argument('--beta', type=float, required=True,
                            help="beta parameter of gamma distribution")
-    argparser.add_argument('--split_number_regularization', type=float, default=0,
+    argparser.add_argument('--split-number-regularization', type=float, default=0,
                            help="Penalty multiplier for each split")
-    argparser.add_argument('--length_regularization', type=float, default=0,
+    argparser.add_argument('--length-regularization', type=float, default=0,
                            help="Penalty multiplier for length of each segment")
-    argparser.add_argument('--length_regularization_function', type=str, default='none',
+    argparser.add_argument('--length-regularization-function', type=str, default='none',
                            choices=['none', 'revlog', 'neglog'],
                            help='''Penalty function for length of segments.:
                            none: no length regulatization
                            revlog: 1/log(1+l)
                            ''')
-    argparser.add_argument('--window_size', type=int,
+    argparser.add_argument('--window-size', type=int,
                            help="Size of window fo split with exact algorithm")
-    argparser.add_argument('--window_shift', type=int,
+    argparser.add_argument('--window-shift', type=int,
                            help = "Shift in one step")
-    argparser.add_argument('--num_rounds', type=int,
+    argparser.add_argument('--num-rounds', type=int,
                            help = '''Number of rounds for round algorithm.
                            If not set, run until no split points removed''')
-    argparser.add_argument('--no_split_constant', action='store_true',
+    argparser.add_argument('--no-split-constant', action='store_true',
                            help = '''[experimental] If set, won't put splits between constant counts''')
-    argparser.add_argument('--no_split_zeros', action='store_true',
+    argparser.add_argument('--no-split-zeros', action='store_true',
                            help = '''If set, won't put splits at non-covered intervals''')
-    argparser.add_argument('--split_at_gaps', action='store_true',
+    argparser.add_argument('--split-at-gaps', action='store_true',
                            help = 'By default gaps between intervals are filled with zeros.\n' +
                                   'Split at gaps overrides this behavior so that\n' +
                                   'non-adjacent intervals are segmented independently.')
