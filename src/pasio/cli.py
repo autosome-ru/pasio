@@ -45,6 +45,8 @@ python pasio.py
                            If not set, run until no split points removed''')
     argparser.add_argument('--no_split_constant', action='store_true',
                            help = '''[experimental] If set, won't put splits between constant counts''')
+    argparser.add_argument('--no_split_zeros', action='store_true',
+                           help = '''If set, won't put splits at non-covered intervals''')
     argparser.add_argument('--split_at_gaps', action='store_true',
                            help = 'By default gaps between intervals are filled with zeros.\n' +
                                   'Split at gaps overrides this behavior so that\n' +
