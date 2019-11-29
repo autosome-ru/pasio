@@ -12,13 +12,29 @@ The only dependencies are numpy and scipy.
 Recommended command line for most practical cases is:
 
 ```
-python -m pasio
-      --bedgraph <PATH TO INPUT bedGraph FILE> -o <PATH TO OUTPUT bedGraph FILE>
+pasio --bedgraph <PATH TO INPUT bedGraph FILE> -o <PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1
       --no_split_constant
       --algorithm rounds
       --window_shift 1250 --window_size 2500
 ```
+
+## Installation
+PASIO works with Python 2.7.1+ and Python 3.4+. The tool is available on PyPA, so you can install it using pip:
+
+```
+  python -m pip install pasio
+```
+
+
+Note that pip install wrapper to run pasio without specifying python. One can use one of two options to run it:
+
+```
+pasio <options>...
+python -m pasio <options>...
+```
+
+The latter option can be useful if you want to run it using a certain python version.
 
 ## Underlying math
 
