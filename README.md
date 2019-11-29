@@ -14,9 +14,9 @@ Recommended command line for most practical cases is:
 ```
 pasio --bedgraph <PATH TO INPUT bedGraph FILE> -o <PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1
-      --no_split_constant
+      --no-split-constant
       --algorithm rounds
-      --window_shift 1250 --window_size 2500
+      --window-shift 1250 --window-size 2500
 ```
 
 ## Installation
