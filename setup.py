@@ -43,12 +43,13 @@ setuptools.setup(
     python_requires='>=2.7.1, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     install_requires=['numpy >= 1.8.0', 'scipy>=0.12.0', 'future >= 0.4.0',],
     extras_require={
-        'dev': ['pytest>=5.3.0', 'pytest-benchmark>=3.2.2', 'flake8', 'tox', 'wheel', 'twine'],
+        'dev': ['pytest', 'pytest-benchmark', 'flake8', 'tox', 'wheel', 'twine', 'setuptools_scm'],
     },
     entry_points={
         'console_scripts': [
             'pasio=pasio.cli:main',
         ],
     },
-    # scripts=['bin/pasio'],
+    use_scm_version=False,
+    setup_requires=['setuptools_scm'],
 )
