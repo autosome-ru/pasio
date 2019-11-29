@@ -2,6 +2,7 @@ import numpy as np
 from .logging import logger
 import itertools
 from .slice_when import slice_when
+from .segmentation import segments_with_scores
 
 def bedgraph_intervals(filename):
     with open(filename) as bedgraph_file:
@@ -71,23 +72,16 @@ def parse_bedgraph(filename, split_at_gaps=False):
         chromosome_data = np.array(chromosome_data, dtype=int)
         yield chromosome, chromosome_data, chromosome_start
 
-def split_bedgraph(in_filename, out_filename, splitter, split_at_gaps):
+def split_bedgraph(in_filename, out_filename, splitter, split_at_gaps=False):
     with open(out_filename, 'w') as outfile:
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgraph(in_filename, split_at_gaps=split_at_gaps):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
-            split_candidates = np.arange(len(counts) + 1)
-            score, splits = splitter.split(counts, split_candidates)
-            scorer = splitter.scorer(counts, splits)
-            sum_logfac = scorer.total_sum_logfac()
-            log_likelyhood = score - sum_logfac
-            logger.info('chrom %s finished, score %f, number of splits %d. '
-                        'Log likelyhood: %f.'% (chrom, score, len(splits), log_likelyhood))
-            logger.info('Starting output of chrom %s' % chrom)
-            for (start, stop, mean_count, log_marginal_likelyhood) in zip(splits[:-1], splits[1:], scorer.mean_counts(), scorer.log_marginal_likelyhoods()):
+            for (start, stop, mean_count, log_marginal_likelyhood) in segments_with_scores(counts, splitter):
                 outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
-                                                            start+chrom_start,
-                                                            stop+chrom_start,
+                                                            start + chrom_start,
+                                                            stop + chrom_start,
                                                             mean_count,
-                                                            stop-start,
+                                                            stop - start,
                                                             log_marginal_likelyhood))
+            logger.info('Output of chromosome %s finished' % chrom)
