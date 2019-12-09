@@ -10,8 +10,7 @@ def get_argparser():
         prog = "Pasio",
         description = '''
 Example usage, simpliest for practical cases:
-python -m pasio
-      --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
+python -m pasio input.bedgraph -o output.bedgraph
       --alpha 5 --beta 1 --algorithm rounds
       --window_shift 1250 --window_size 2500
 ''',
@@ -20,8 +19,7 @@ python -m pasio
                            choices=['slidingwindow', 'exact', 'rounds'],
                            required=True,
                            help="Algorithm to use")
-    argparser.add_argument('--bedgraph', required=True,
-                           help="Input bedgraph path")
+    argparser.add_argument('bedgraph', help="Input bedgraph path")
     argparser.add_argument('-o', '--output-bedgraph', help="Output begraph path",
                            required=True)
     argparser.add_argument('--alpha', type=float, required=True,
