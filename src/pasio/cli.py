@@ -1,6 +1,7 @@
 import argparse
 from .process_bedgraph import split_bedgraph
 from .logging import logger
+import logging
 from .splitters.default_splitters import configure_splitter
 
 def get_argparser():
@@ -51,11 +52,14 @@ python -m pasio
                            help = 'By default gaps between intervals are filled with zeros.\n' +
                                   'Split at gaps overrides this behavior so that\n' +
                                   'non-adjacent intervals are segmented independently.')
+    argparser.add_argument('--quiet', action='store_true', help='reduce logging level')
     return argparser
 
 def main():
     argparser = get_argparser()
     args = argparser.parse_args()
+    if args.quiet:
+        logger.setLevel(logging.WARNING)
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(**vars(args))
     logger.info('Starting Pasio with args'+str(args))
