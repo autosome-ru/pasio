@@ -8,7 +8,7 @@ def get_argparser():
         prog = "Pasio",
         description = '''
 Example usage, simpliest for practical cases:
-python pasio.py
+python -m pasio
       --bedgraph ~/<PATH TO INPUT bed.Graph FILE> -o ~/<PATH TO OUTPUT bedGraph FILE>
       --alpha 5 --beta 1 --algorithm rounds
       --window_shift 1250 --window_size 2500
@@ -20,7 +20,7 @@ python pasio.py
                            help="Algorithm to use")
     argparser.add_argument('--bedgraph', required=True,
                            help="Input bedgraph path")
-    argparser.add_argument('-o', '--out_bedgraph', help="Output begraph path",
+    argparser.add_argument('-o', '--output-bedgraph', help="Output begraph path",
                            required=True)
     argparser.add_argument('--alpha', type=float, required=True,
                            help="alpha parameter of gamma distribution")
@@ -59,4 +59,4 @@ def main():
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(**vars(args))
     logger.info('Starting Pasio with args'+str(args))
-    split_bedgraph(args.bedgraph, args.out_bedgraph, splitter, split_at_gaps=args.split_at_gaps)
+    split_bedgraph(args.bedgraph, args.output_bedgraph, splitter, split_at_gaps=args.split_at_gaps)
