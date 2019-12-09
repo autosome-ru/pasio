@@ -3,6 +3,7 @@ from .process_bedgraph import split_bedgraph
 from .logging import logger
 import logging
 from .splitters.default_splitters import configure_splitter
+from .version import __version__
 
 def get_argparser():
     argparser = argparse.ArgumentParser(
@@ -53,6 +54,7 @@ python -m pasio
                                   'Split at gaps overrides this behavior so that\n' +
                                   'non-adjacent intervals are segmented independently.')
     argparser.add_argument('--quiet', action='store_true', help='reduce logging level')
+    argparser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     return argparser
 
 def main():
