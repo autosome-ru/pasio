@@ -9,15 +9,19 @@ def get_argparser():
     argparser = argparse.ArgumentParser(
         prog = "pasio",
         description = 'PASIO produces segmentation of coverage profile into regions with uniform coverage\n',
-        usage='pasio input.bedgraph -o output.bedgraph [options]',
+        usage='pasio input.bedgraph[.gz] [options]',
         formatter_class=argparse.RawTextHelpFormatter)
-    argparser.add_argument('bedgraph', help="Input bedgraph path")
-    argparser.add_argument('--output-file', '-o', help="Output begraph path", metavar='FILE',
-                           dest='output_file')
+    argparser.add_argument('bedgraph', metavar='input_bedgraph',
+                            help="Input file in bedgraph format\n"
+                                 "(it can be gzipped)")
     argparser.add_argument('--alpha', '-a', type=float, default=1.0, metavar='VAL',
                            help="alpha parameter of gamma distribution (default: %(default)s)")
     argparser.add_argument('--beta', '-b', type=float, default=1.0, metavar='VAL',
                            help="beta parameter of gamma distribution (default: %(default)s)")
+    argparser.add_argument('--output-file', '-o',  metavar='FILE',
+                          help="Output file. It will be in bedgraph/bed/tsv format\n"
+                               "(can be gzipped)",
+                          dest='output_file')
     argparser.add_argument('--output-mode', metavar='MODE', default='bedgraph',
                            choices=['bedgraph', 'bedgraph+length+LMM', 'bed'],
                            help="Formatting of output. Default: %(default)s.\n"
