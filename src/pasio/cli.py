@@ -18,6 +18,10 @@ def get_argparser():
                            help="alpha parameter of gamma distribution (default: %(default)s)")
     argparser.add_argument('--beta', '-b', type=float, default=1.0, metavar='VAL',
                            help="beta parameter of gamma distribution (default: %(default)s)")
+    argparser.add_argument('--output-mode', metavar='MODE', default='bedgraph',
+                           choices=['bedgraph', 'bedgraph+length+LMM', 'bed'],
+                           help="Formatting of output. Default: %(default)s.\n"
+                                "Possible options: %(choices)s")
     argparser.add_argument('--algorithm',
                            choices=['slidingwindow', 'exact', 'rounds'],
                            default='rounds', metavar='ALGO',
@@ -67,4 +71,6 @@ def main():
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(**vars(args))
     logger.info('Starting Pasio with args'+str(args))
-    split_bedgraph(args.bedgraph, args.output_file, splitter, split_at_gaps=args.split_at_gaps)
+    split_bedgraph(args.bedgraph, args.output_file, splitter,
+                  split_at_gaps=args.split_at_gaps,
+                  output_mode=args.output_mode)

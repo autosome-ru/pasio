@@ -52,16 +52,30 @@ def parse_bedgraph(filename, split_at_gaps=False):
         chromosome_data = np.array(chromosome_data, dtype=int)
         yield chromosome, chromosome_data, chromosome_start
 
-def split_bedgraph(in_filename, out_filename, splitter, split_at_gaps=False):
+def split_bedgraph(in_filename, out_filename, splitter, split_at_gaps=False, output_mode='bedgraph'):
     with open(out_filename, 'w') as outfile:
         logger.info('Reading input file %s' % (in_filename))
         for chrom, counts, chrom_start in parse_bedgraph(in_filename, split_at_gaps=split_at_gaps):
             logger.info('Starting chrom %s of length %d' % (chrom, len(counts)))
-            for scored_interval in segments_with_scores(counts, splitter):
-                outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
-                                                            scored_interval.start + chrom_start,
-                                                            scored_interval.stop + chrom_start,
-                                                            scored_interval.mean_count,
-                                                            scored_interval.length,
-                                                            scored_interval.log_marginal_likelyhood))
+            if output_mode == 'bedgraph':
+                for scored_interval in segments_with_scores(counts, splitter):
+                    outfile.write('%s\t%d\t%d\t%f\n' % (chrom,
+                                                        scored_interval.start + chrom_start,
+                                                        scored_interval.stop + chrom_start,
+                                                        scored_interval.mean_count))
+            elif output_mode == 'bed':
+                for scored_interval in segments_with_scores(counts, splitter):
+                    outfile.write('%s\t%d\t%d\n' % (chrom,
+                                                    scored_interval.start + chrom_start,
+                                                    scored_interval.stop + chrom_start))
+            elif output_mode == 'bedgraph+length+LMM':
+                for scored_interval in segments_with_scores(counts, splitter):
+                    outfile.write('%s\t%d\t%d\t%f\t%d\t%f\n' % (chrom,
+                                                                scored_interval.start + chrom_start,
+                                                                scored_interval.stop + chrom_start,
+                                                                scored_interval.mean_count,
+                                                                scored_interval.length,
+                                                                scored_interval.log_marginal_likelyhood))
+            else:
+                raise ValueError('Unknown output mode `%s`' % output_mode)
             logger.info('Output of chromosome %s finished' % chrom)
