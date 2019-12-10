@@ -13,7 +13,7 @@ def get_argparser():
         formatter_class=argparse.RawTextHelpFormatter)
     argparser.add_argument('bedgraph', help="Input bedgraph path")
     argparser.add_argument('--output-file', '-o', help="Output begraph path", metavar='FILE',
-                          required=True, dest='output_file')
+                           dest='output_file')
     argparser.add_argument('--alpha', '-a', type=float, default=1.0, metavar='VAL',
                            help="alpha parameter of gamma distribution (default: %(default)s)")
     argparser.add_argument('--beta', '-b', type=float, default=1.0, metavar='VAL',
@@ -71,6 +71,8 @@ def main():
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(**vars(args))
     logger.info('Starting Pasio with args'+str(args))
-    split_bedgraph(args.bedgraph, args.output_file, splitter,
+    split_bedgraph(in_filename=args.bedgraph,
+                  out_filename=args.output_file,
+                  splitter=splitter,
                   split_at_gaps=args.split_at_gaps,
                   output_mode=args.output_mode)

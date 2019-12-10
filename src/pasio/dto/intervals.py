@@ -1,4 +1,6 @@
 from collections import namedtuple
+from ..utils.gzip_utils import open_for_read
+
 class ScoredInterval( namedtuple('ScoredInterval', ['start', 'stop', 'mean_count', 'log_marginal_likelyhood']) ):
     @property
     def length(self):
@@ -18,10 +20,15 @@ class BedgraphInterval(namedtuple('BedgraphInterval', ['chrom', 'start', 'stop',
         return cls(chrom, start, stop, count)
 
     @classmethod
-    def iter_from_bedgraph(cls, filename):
-        with open(filename) as bedgraph_file:
-            for line in bedgraph_file:
-                line = line.strip()
-                if line == '':
-                    continue
-                yield cls.from_string(line)
+    def each_in_file(cls, filename):
+        with open_for_read(filename) as stream:
+            for interval in cls.each_in_stream(stream):
+                yield interval
+
+    @classmethod
+    def each_in_stream(cls, stream):
+        for line in stream:
+            line = line.strip()
+            if line == '':
+                continue
+            yield cls.from_string(line)

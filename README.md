@@ -12,8 +12,10 @@ The only dependencies are numpy and scipy.
 Defaults are reasonable for fast yet almost precise computation, so usually it is enough to run:
 
 ```
-pasio input.bedgraph -o output.bedgraph
+pasio input.bedgraph
 ```
+
+PASIO can read and write to gzipped files (filename should have `.gz` extension).
 
 ## Installation
 PASIO works with Python 2.7.1+ and Python 3.4+. The tool is available on PyPA, so you can install it using pip:
