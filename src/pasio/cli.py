@@ -1,3 +1,4 @@
+import sys
 import argparse
 from .process_bedgraph import split_bedgraph
 from .logging import logger
@@ -68,7 +69,8 @@ def get_argparser():
     argparser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     return argparser
 
-def main():
+# main part of runner
+def process():
     argparser = get_argparser()
     args = argparser.parse_args()
     logger.setLevel(getattr(logging, args.verbosity.upper()))
@@ -80,3 +82,11 @@ def main():
                   splitter=splitter,
                   split_at_gaps=args.split_at_gaps,
                   output_mode=args.output_mode)
+
+# Wrapper for setuptools
+def main():
+    try:
+        process()
+    except KeyboardInterrupt:
+        logger.error('Program was interrupted')
+        sys.exit(1)
