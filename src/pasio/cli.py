@@ -7,46 +7,47 @@ from .version import __version__
 
 def get_argparser():
     argparser = argparse.ArgumentParser(
-        prog = "Pasio",
-        description = '''
-Example usage, simpliest for practical cases:
-python -m pasio input.bedgraph -o output.bedgraph
-      --alpha 5 --beta 1 --algorithm rounds
-      --window_shift 1250 --window_size 2500
-''',
+        prog = "pasio",
+        description = 'PASIO produces segmentation of coverage profile into regions with uniform coverage\n',
+        usage='pasio input.bedgraph -o output.bedgraph [options]',
         formatter_class=argparse.RawTextHelpFormatter)
+    argparser.add_argument('bedgraph', help="Input bedgraph path")
+    argparser.add_argument('--output-file', '-o', help="Output begraph path", metavar='FILE',
+                          required=True, dest='output_file')
+    argparser.add_argument('--alpha', '-a', type=float, default=1.0, metavar='VAL',
+                           help="alpha parameter of gamma distribution (default: %(default)s)")
+    argparser.add_argument('--beta', '-b', type=float, default=1.0, metavar='VAL',
+                           help="beta parameter of gamma distribution (default: %(default)s)")
     argparser.add_argument('--algorithm',
                            choices=['slidingwindow', 'exact', 'rounds'],
-                           required=True,
-                           help="Algorithm to use")
-    argparser.add_argument('bedgraph', help="Input bedgraph path")
-    argparser.add_argument('-o', '--output-bedgraph', help="Output begraph path",
-                           required=True)
-    argparser.add_argument('--alpha', type=float, required=True,
-                           help="alpha parameter of gamma distribution")
-    argparser.add_argument('--beta', type=float, required=True,
-                           help="beta parameter of gamma distribution")
-    argparser.add_argument('--split-number-regularization', type=float, default=0,
-                           help="Penalty multiplier for each split")
-    argparser.add_argument('--length-regularization', type=float, default=0,
-                           help="Penalty multiplier for length of each segment")
-    argparser.add_argument('--length-regularization-function', type=str, default='none',
-                           choices=['none', 'revlog', 'neglog'],
-                           help='''Penalty function for length of segments.:
-                           none: no length regulatization
-                           revlog: 1/log(1+l)
-                           ''')
-    argparser.add_argument('--window-size', type=int,
-                           help="Size of window fo split with exact algorithm")
-    argparser.add_argument('--window-shift', type=int,
-                           help = "Shift in one step")
-    argparser.add_argument('--num-rounds', type=int,
-                           help = '''Number of rounds for round algorithm.
-                           If not set, run until no split points removed''')
+                           default='rounds', metavar='ALGO',
+                           help="Algorithm to use (default: %(default)s)\n"
+                                "Possible options: %(choices)s")
     argparser.add_argument('--no-split-constant', action='store_true',
-                           help = '''[experimental] If set, won't put splits between constant counts''')
+                           help = '''If set, won't put splits between constant counts''')
     argparser.add_argument('--no-split-zeros', action='store_true',
                            help = '''If set, won't put splits at non-covered intervals''')
+    argparser.add_argument('--split-number-regularization', type=float, default=0,
+                           metavar='VALUE',
+                           help="Penalty multiplier for each split")
+    argparser.add_argument('--length-regularization', type=float, default=0,
+                           metavar='VALUE',
+                           help="Penalty multiplier for length of each segment")
+    argparser.add_argument('--length-regularization-function', type=str, default='none',
+                           metavar='FUNC',
+                           choices=['none', 'revlog'],
+                           help='Penalty function for length of segments:\n'
+                                'Default: %(default)s. Possible options:\n'
+                                '* none -- no length regulatization\n'
+                                '* revlog -- 1/log(1+l)\n')
+    argparser.add_argument('--window-size', type=int, default=2500, metavar='SIZE',
+                           help="Size of window for slidingwindow/rounds algorithms\n"
+                           "(default: %(default)s)")
+    argparser.add_argument('--window-shift', type=int, default=1250, metavar='SHIFT',
+                           help = "Shift in one step (default: %(default)s)")
+    argparser.add_argument('--num-rounds', type=int, metavar='N',
+                           help = 'Number of rounds for round algorithm.\n'
+                                   'If not set, run until no split points removed')
     argparser.add_argument('--split-at-gaps', action='store_true',
                            help = 'By default gaps between intervals are filled with zeros.\n' +
                                   'Split at gaps overrides this behavior so that\n' +
@@ -63,4 +64,4 @@ def main():
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(**vars(args))
     logger.info('Starting Pasio with args'+str(args))
-    split_bedgraph(args.bedgraph, args.output_bedgraph, splitter, split_at_gaps=args.split_at_gaps)
+    split_bedgraph(args.bedgraph, args.output_file, splitter, split_at_gaps=args.split_at_gaps)
