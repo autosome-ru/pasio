@@ -54,15 +54,16 @@ def get_argparser():
                            help = 'By default gaps between intervals are filled with zeros.\n' +
                                   'Split at gaps overrides this behavior so that\n' +
                                   'non-adjacent intervals are segmented independently.')
-    argparser.add_argument('--quiet', action='store_true', help='reduce logging level')
+    argparser.add_argument('--verbosity', metavar='LEVEL', default='WARNING',
+                          help='Set logging level (default: %(default)s)\n'
+                               'Use `INFO` to show work progress')
     argparser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     return argparser
 
 def main():
     argparser = get_argparser()
     args = argparser.parse_args()
-    if args.quiet:
-        logger.setLevel(logging.WARNING)
+    logger.setLevel(getattr(logging, args.verbosity.upper()))
     logger.info("Pasio:"+ str(args))
     splitter = configure_splitter(**vars(args))
     logger.info('Starting Pasio with args'+str(args))

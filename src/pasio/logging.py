@@ -21,11 +21,11 @@ class LoggingContextFilter:
 
 logger = logging.getLogger('pasio')
 stderr = logging.StreamHandler()
-stderr.setLevel(logging.INFO)
+stderr.setLevel(logging.WARNING)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 stderr.setFormatter(formatter)
 logger.addHandler(stderr)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 logging_filter = LoggingContextFilter()
 logger.addFilter(logging_filter)
