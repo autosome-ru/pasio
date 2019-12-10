@@ -23,10 +23,12 @@ def get_argparser():
                            default='rounds', metavar='ALGO',
                            help="Algorithm to use (default: %(default)s)\n"
                                 "Possible options: %(choices)s")
-    argparser.add_argument('--no-split-constant', action='store_true',
-                           help = '''If set, won't put splits between constant counts''')
-    argparser.add_argument('--no-split-zeros', action='store_true',
-                           help = '''If set, won't put splits at non-covered intervals''')
+    argparser.add_argument('--split-constraints', metavar='STRATEGY',
+                          choices=('none', 'zeros', 'constants'),
+                          default='constants',
+                          help="Specify types of intervals which shouldn't be splitted.\n"
+                               "Default: %(default)s\n"
+                               "Options: %(choices)s")
     argparser.add_argument('--split-number-regularization', type=float, default=0,
                            metavar='VALUE',
                            help="Penalty multiplier for each split")

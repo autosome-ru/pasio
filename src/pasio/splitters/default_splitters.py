@@ -11,7 +11,7 @@ from ..log_marginal_likelyhood import ScorerFactory
 # all unknown arguments (kwargs) will be ignored
 def configure_splitter(alpha=1, beta=1, algorithm='rounds',
                        window_size=2500, window_shift=1250, num_rounds=None,
-                       no_split_constant=True, no_split_zeros=True,
+                       split_constraints='constants',
                        length_regularization_function='none', length_regularization=0, split_number_regularization=0,
                        **kwargs):
     if algorithm not in ['exact', 'slidingwindow', 'rounds']:
@@ -49,13 +49,14 @@ def configure_splitter(alpha=1, beta=1, algorithm='rounds',
         return square_splitter
 
     # no_split_constant is a more aggressive optimization strategy than no_split_zeros
-    # (the first one implies the second one but we don't check if no_split_zeros is True in this case)
-    if no_split_constant:
+    if split_constraints == 'constants':
         base_splitter = ReducerCombiner(NotConstantReducer(), square_splitter)
-    elif no_split_zeros:
+    elif split_constraints == 'zeros':
         base_splitter = ReducerCombiner(NotZeroReducer(), square_splitter)
-    else:
+    elif split_constraints == 'none':
         base_splitter = square_splitter
+    else:
+        raise ValueError('Unknown split_constraints option `%s`' % split_constraints)
 
     sliding_window_reducer = SlidingWindowReducer(sliding_window=sliding_window, base_reducer=base_splitter)
     if algorithm == 'slidingwindow':
