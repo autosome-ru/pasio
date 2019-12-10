@@ -24,16 +24,16 @@ def choose_open_function(filename, force_gzip=None):
     else:
         raise ValueError("`force_gzip` should be one of True/False/None")
 
-def open_for_write(output_file, force_gzip=None, mode='wt'):
-    if output_file and (output_file != '-'):
-        open_func = choose_open_function(filename=output_file, force_gzip=force_gzip)
-        return open_func(output_file, mode)
+def open_for_write(filename, force_gzip=None, mode='wt'):
+    if filename and (filename != '-'):
+        open_func = choose_open_function(filename=filename, force_gzip=force_gzip)
+        return open_func(filename, mode)
     else:
         return nullcontext(sys.stdout)
 
-def open_for_read(input_file, force_gzip=None, mode='rt'):
-    if input_file and (input_file != '-'):
-        open_func = choose_open_function(filename=input_file, force_gzip=force_gzip)
-        return open_func(input_file, mode)
+def open_for_read(filename, force_gzip=None, mode='rt'):
+    if filename and (filename != '-'):
+        open_func = choose_open_function(filename=filename, force_gzip=force_gzip)
+        return open_func(filename, mode)
     else:
         return nullcontext(sys.stdin)
