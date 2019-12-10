@@ -9,14 +9,10 @@ tsv file with genome splited into segments which coverage can be treated as equa
 Pasio runs on both Python 2 and 3 (Python 2 interpreter runs a bit faster).
 The only dependencies are numpy and scipy.
 
-Recommended command line for most practical cases is:
+Defaults are reasonable for fast yet almost precise computation, so usually it is enough to run:
 
 ```
-pasio --bedgraph <PATH TO INPUT bedGraph FILE> -o <PATH TO OUTPUT bedGraph FILE>
-      --alpha 5 --beta 1
-      --no-split-constant
-      --algorithm rounds
-      --window-shift 1250 --window-size 2500
+pasio input.bedgraph -o output.bedgraph
 ```
 
 ## Installation
