@@ -15,7 +15,13 @@ Defaults are reasonable for fast yet almost precise computation, so usually it i
 pasio input.bedgraph
 ```
 
+Note that PASIO process bedgraph contig by contig. Thus bedgraph should be sorted by contig/chromosome!
+
 PASIO can read and write to gzipped files (filename should have `.gz` extension).
+
+PASIO can also process bedgraph from stdin by supplying `-` instead of filename.
+It can be useful for transcriptomic data where contigs are short enough to be processed on the fly.
+
 
 ## Installation
 PASIO works with Python 2.7.1+ and Python 3.4+. The tool is available on PyPA, so you can install it using pip:
