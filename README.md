@@ -15,6 +15,8 @@ Defaults are reasonable for fast yet almost precise computation, so usually it i
 pasio input.bedgraph
 ```
 
+This defaults are yet subject to change, so if you want results to be reproducible between versions, please specify all substantial parameters (especially α and β) explicitly!
+
 Note that PASIO process bedgraph contig by contig. Thus bedgraph should be sorted by contig/chromosome!
 
 PASIO can read and write to gzipped files (filename should have `.gz` extension).
