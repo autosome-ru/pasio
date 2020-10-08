@@ -1,3 +1,4 @@
+![Pasio logo](logos/pasio_256.png?raw=true "Logo")
 # PASIO
 
 Pasio is a tool for denosing DNA coverage profiles coming from high-throughput sequencing data.
