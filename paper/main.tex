@@ -1,0 +1,634 @@
+% Template for PLoS
+% Version 3.5 March 2018
+%
+% % % % % % % % % % % % % % % % % % % % % %
+%
+% -- IMPORTANT NOTE
+%
+% This template contains comments intended 
+% to minimize problems and delays during our production 
+% process. Please follow the template instructions
+% whenever possible.
+%
+% % % % % % % % % % % % % % % % % % % % % % % 
+%
+% Once your paper is accepted for publication, 
+% PLEASE REMOVE ALL TRACKED CHANGES in this file 
+% and leave only the final text of your manuscript. 
+% PLOS recommends the use of latexdiff to track changes during review, as this will help to maintain a clean tex file.
+% Visit https://www.ctan.org/pkg/latexdiff?lang=en for info or contact us at latex@plos.org.
+%
+%
+% There are no restrictions on package use within the LaTeX files except that 
+% no packages listed in the template may be deleted.
+%
+% Please do not include colors or graphics in the text.
+%
+% The manuscript LaTeX source should be contained within a single file (do not use \input, \externaldocument, or similar commands).
+%
+% % % % % % % % % % % % % % % % % % % % % % %
+%
+% -- FIGURES AND TABLES
+%
+% Please include tables/figure captions directly after the paragraph where they are first cited in the text.
+%
+% DO NOT INCLUDE GRAPHICS IN YOUR MANUSCRIPT
+% - Figures should be uploaded separately from your manuscript file. 
+% - Figures generated using LaTeX should be extracted and removed from the PDF before submission. 
+% - Figures containing multiple panels/subfigures must be combined into one image file before submission.
+% For figure citations, please use "Fig" instead of "Figure".
+% See http://journals.plos.org/plosone/s/figures for PLOS figure guidelines.
+%
+% Tables should be cell-based and may not contain:
+% - spacing/line breaks within cells to alter layout or alignment
+% - do not nest tabular environments (no tabular environments within tabular environments)
+% - no graphics or colored text (cell background color/shading OK)
+% See http://journals.plos.org/plosone/s/tables for table guidelines.
+%
+% For tables that exceed the width of the text column, use the adjustwidth environment as illustrated in the example table in text below.
+%
+% % % % % % % % % % % % % % % % % % % % % % % %
+%
+% -- EQUATIONS, MATH SYMBOLS, SUBSCRIPTS, AND SUPERSCRIPTS
+%
+% IMPORTANT
+% Below are a few tips to help format your equations and other special characters according to our specifications. For more tips to help reduce the possibility of formatting errors during conversion, please see our LaTeX guidelines at http://journals.plos.org/plosone/s/latex
+%
+% For inline equations, please be sure to include all portions of an equation in the math environment.  For example, x$^2$ is incorrect; this should be formatted as $x^2$ (or $\mathrm{x}^2$ if the romanized font is desired).
+%
+% Do not include text that is not math in the math environment. For example, CO2 should be written as CO\textsubscript{2} instead of CO$_2$.
+%
+% Please add line breaks to long display equations when possible in order to fit size of the column. 
+%
+% For inline equations, please do not include punctuation (commas, etc) within the math environment unless this is part of the equation.
+%
+% When adding superscript or subscripts outside of brackets/braces, please group using {}.  For example, change "[U(D,E,\gamma)]^2" to "{[U(D,E,\gamma)]}^2". 
+%
+% Do not use \cal for caligraphic font.  Instead, use \mathcal{}
+%
+% % % % % % % % % % % % % % % % % % % % % % % % 
+%
+% Please contact latex@plos.org with any questions.
+%
+% % % % % % % % % % % % % % % % % % % % % % % %
+
+\documentclass[10pt,letterpaper]{article}
+\usepackage[top=0.85in,left=2.75in,footskip=0.75in]{geometry}
+
+% amsmath and amssymb packages, useful for mathematical formulas and symbols
+\usepackage{amsmath,amssymb}
+
+% Use adjustwidth environment to exceed column width (see example table in text)
+\usepackage{changepage}
+
+% Use Unicode characters when possible
+\usepackage[utf8x]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1,T2A]{fontenc}
+
+
+% textcomp package and marvosym package for additional characters
+\usepackage{textcomp,marvosym}
+
+% cite package, to clean up citations in the main text. Do not remove.
+\usepackage{cite}
+
+% Use nameref to cite supporting information files (see Supporting Information section for more info)
+\usepackage{nameref,hyperref}
+
+% line numbers
+\usepackage[right]{lineno}
+
+% ligatures disabled
+\usepackage{microtype}
+% \DisableLigatures[f]{encoding = *, family = * }
+
+% color can be used to apply background shading to table cells only
+\usepackage[table]{xcolor}
+
+% array package and thick rules for tables
+\usepackage{array}
+
+% create "+" rule type for thick vertical lines
+\newcolumntype{+}{!{\vrule width 2pt}}
+
+% create \thickcline for thick horizontal lines of variable length
+\newlength\savedwidth
+\newcommand\thickcline[1]{%
+  \noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
+  \cline{#1}%
+  \noalign{\vskip\arrayrulewidth}%
+  \noalign{\global\arrayrulewidth\savedwidth}%
+}
+
+% \thickhline command for thick horizontal lines that span the table
+\newcommand\thickhline{\noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
+\hline
+\noalign{\global\arrayrulewidth\savedwidth}}
+
+
+% Remove comment for double spacing
+%\usepackage{setspace} 
+%\doublespacing
+
+% Text layout
+\raggedright
+\setlength{\parindent}{0.5cm}
+\textwidth 5.25in 
+\textheight 8.75in
+
+% Bold the 'Figure #' in the caption and separate it from the title/caption with a period
+% Captions will be left justified
+\usepackage[aboveskip=1pt,labelfont=bf,labelsep=period,justification=raggedright,singlelinecheck=off]{caption}
+\renewcommand{\figurename}{Fig}
+
+% Use the PLoS provided BiBTeX style
+\bibliographystyle{plos2015}
+
+% Remove brackets from numbering in List of References
+\makeatletter
+\renewcommand{\@biblabel}[1]{\quad#1.}
+\makeatother
+
+
+
+% Header and Footer with logo
+\usepackage{lastpage,fancyhdr,graphicx}
+\usepackage{epstopdf}
+%\pagestyle{myheadings}
+\pagestyle{fancy}
+\fancyhf{}
+%\setlength{\headheight}{27.023pt}
+%\lhead{\includegraphics[width=2.0in]{PLOS-submission.eps}}
+\rfoot{\thepage/\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrule}{\hrule height 2pt \vspace{2mm}}
+\fancyheadoffset[L]{2.25in}
+\fancyfootoffset[L]{2.25in}
+\lfoot{\today}
+
+%% Include all macros below
+
+\newcommand{\lorem}{{\bf LOREM}}
+\newcommand{\ipsum}{{\bf IPSUM}}
+\newtheorem{hyp}{Hypothesis} 
+
+%% END MACROS SECTION
+
+
+\begin{document}
+\vspace*{0.2in}
+
+% Title must be 250 characters or less.
+\begin{flushleft}
+{\Large
+\textbf\newline{Title of submission to PLOS journals} % Please use "sentence case" for title and headings (capitalize only the first word in a title (or heading), the first word in a subtitle (or subheading), and any proper nouns).
+}
+\newline
+% Insert author names, affiliations and corresponding author email (do not include titles, positions, or degrees).
+\\
+Andrey Lando\textsuperscript{1,2\Yinyang},
+Ilya Vorontsov\textsuperscript{2\Yinyang},
+Ivan Kulakovsky\textsuperscript{2,3\textcurrency},
+Vsevolod Makeev\textsuperscript{2},
+Name5 Surname\textsuperscript{2\ddag},
+Name6 Surname\textsuperscript{2\ddag},
+Name7 Surname\textsuperscript{1,2,3*},
+with the Lorem Ipsum Consortium\textsuperscript{\textpilcrow}
+\\
+\bigskip
+\textbf{1} Affiliation Dept/Program/Center, Institution Name, City, State, Country
+\\
+\textbf{2} Affiliation Dept/Program/Center, Institution Name, City, State, Country
+\\
+\textbf{3} Affiliation Dept/Program/Center, Institution Name, City, State, Country
+\\
+\bigskip
+
+% Insert additional author notes using the symbols described below. Insert symbol callouts after author names as necessary.
+% 
+% Remove or comment out the author notes below if they aren't used.
+%
+% Primary Equal Contribution Note
+\Yinyang These authors contributed equally to this work.
+
+% Additional Equal Contribution Note
+% Also use this double-dagger symbol for special authorship notes, such as senior authorship.
+\ddag These authors also contributed equally to this work.
+
+% Current address notes
+\textcurrency Current Address: Dept/Program/Center, Institution Name, City, State, Country % change symbol to "\textcurrency a" if more than one current address note
+% \textcurrency b Insert second current address 
+% \textcurrency c Insert third current address
+
+% Deceased author note
+\dag Deceased
+
+% Group/Consortium Author Note
+\textpilcrow Membership list can be found in the Acknowledgments section.
+
+% Use the asterisk to denote corresponding authorship and provide email address in note below.
+* correspondingauthor@institute.edu
+
+\end{flushleft}
+% Please keep the abstract below 300 words
+\section*{Abstract}
+Modern high-throughput sequencing sequencing methods like ChIP-seq, DNAse-seq, ATAC-seq report biologically relevant signal
+through coverage of genome regions. 
+Raw coverage data is noisy and doesn't let one to identify regions with distinctive coverage features like peaks in case of ChIP-seq experiments or open chromatin regions in DNAse-seq. This problem is often referenced as segmentation problem.
+In this paper we introduce scoring function that, by its properties,
+penalizes segmentation for segments with inhomogeneous coverage and for adjacent segments with similar properties.
+% здесь хорошо бы сказать, что это не сама функция так устроена, а что она обладает таким свойством
+Scoring function has no assumption about shape of coverage profile within a segment that makes it's prediction unbiased to the origin of segment and
+makes our method universal.
+We use a dynamic programming algorithm that finds segmentation that maximizes this scoring function.
+We provide heuristics that make search of sub-optimal solution feasible.
+Our tool Pasio takes only raw coverage of each nucleotide as input and produces non-intersecting segments.
+Pasio is implemented as a Python standalone application with numerical computations vectorized for time efficiency.  
+
+
+
+% Scoring function balances between number of segments and inhomogeneousity within each segment
+
+% provides evidence on quality of segmentation based on
+% dissimilarity between adjacent segments.
+
+
+% In this paper we introduce a scoring function
+
+%In this paper we introduce Pasio: a computational method of processing coverage data that identifies regions with contrasting coverage profiles along chromosome. 
+% Please keep the Author Summary between 150 and 200 words
+% Use first person. PLOS ONE authors please skip this step. 
+% Author Summary not valid for PLOS ONE submissions.   
+\section*{Author summary}
+WHat this is about?
+%А это про что раздел вообще?
+\linenumbers
+
+% Use "Eq" instead of "Equation" for equation citations.
+\section{Introduction}
+% Введение надо написать, что за данные и примеры. И какие подходы бывают.
+
+% \section{Materials and methods}
+% \subsection{Building objective}
+
+% % For figure citations, please use "Fig" instead of "Figure".
+
+% % Place figure captions after the first paragraph in which they are cited.
+% \begin{figure}[!h]
+% \caption{{\bf Bold the figure title.}
+% Figure caption text here, please use this space for the figure panel descriptions instead of using subfigure commands. A: Lorem ipsum dolor sit amet. B: Consectetur adipiscing elit.}
+% \label{fig1}
+% \end{figure}
+
+\subsection{Segmentation}
+\subsubsection{Constructing the scoring function}
+Below we'll discuss processing of experimental data that can come from various protocols involving sequencing like DNAse-seq, ATAC-seq and ChIP-seq. We'll refer to this data as genome coverage profile or profile.
+Let's say profile of part of genome such as chromosome or contig is a vector $V$ of counts $c_1, \dots c_n$
+where $c_i$ is a coverage of $i$-th nucleotide.
+\begin{hyp}
+    \label{hyp:main}
+Each time we obtain a profile in an experiment, we get a vector $V$ that can be modeled the following way:
+$V$ is a concatenation of segments $s_1, \cdots s_k$ of various lengths. In each segment $s_i$ all the counts $c$ come from a Poisson distribution
+    $P(\lambda_i)$. A parameter $\lambda_i$ can be different for each segment.
+\end{hyp}
+Given a segment $s_i$ unbiased estimate for $\lambda_i$ is a mean of all counts in $s_i$.
+
+One can see that hypothesis (\ref{hyp:main}) is true. 
+$V$ can be constructed from segments each with length of one nucleotide
+and $\lambda_i$ equal to the coverage of this nucleotide. 
+
+What will interest us is other possible segmentations of vector $V$ that suit hypothesis (\ref{hyp:main}).
+We shall introduce a scoring function that will give evidence of
+suitability of this segmentation to genome coverage data according to (\ref{hyp:main}) given counts
+$c_1, \dots c_n$ and segmentation points $s_1, \cdots s_k$.
+
+Likelihood of drawing $x$ from Poisson distribution $P(\lambda)$ is equal to 
+$$
+L(x | \lambda) = \frac {\lambda^x} {x!} e^{-\lambda}
+$$.
+
+Given a segment $s$ and it's counts $\overline{x}$ one can compute a likelihood
+for given Poisson parameter $\lambda$:
+$$
+L(\overline{x}| \lambda) = \prod _{i=0} ^{|\overline{x}|} {L(x_i| \lambda)} = 
+\prod _{i=0} ^{|\overline{x}|} \frac {\lambda^{x_i}} {x_i!} e^{-\lambda} = 
+e^{-|\overline{x}|\lambda} \prod _{i=0} ^{|\overline{x}|} \frac {\lambda^{x_i}} {x_i!}  = 
+\frac {e^{-|\overline{x}|\lambda} \lambda^{\sum _{i=0} ^{|\overline{x}|} x_i}} {\prod _{i=0} ^{|\overline{x}|} x_i!}
+$$
+Then let's call length of a segment $|\overline{x}| = N(s)$ and sum of counts $\sum _{i=0} ^{|\overline{x}|} x_i = C(s)$.
+Likelihood is then can be written as 
+$$
+L(\overline{x}| \lambda) = \prod _{i=0} ^{|\overline{x}|} {L(x_i| \lambda)} = 
+\frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!}
+$$
+
+For the purpose of segmentation we will use marginal likelihood
+%% Мы не знаем, как это мотивировать, а жаль.
+$$
+    ML(s) = \int _{0} ^{\infty} L(s| \lambda) \rho(\lambda) d\lambda = 
+ \int _{0} ^{\infty} \rho(\lambda) \frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!} d\lambda
+$$
+Here, $\rho(\lambda)$ is a prior -- a distribution on lambdas.
+We assume Poisson parameters $\lambda$ for different segments to be independent from each other but drawn from the same distribution $\rho(\lambda)$ which is a gamma distribution with parameters shape $\alpha$ and rate $\beta$:
+
+$$
+ \rho(\lambda) = \Gamma(\alpha, \beta) = \frac {\beta^\alpha} {\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\lambda \beta}
+$$
+
+Given the prior, now we can write the whole integral for marginal likelihood:
+\begin{align*}
+    ML(s, \alpha, \beta) & = 
+ \int _{0} ^{\infty} \frac {\beta^\alpha} {\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\lambda \beta} \frac {e^{-N(s)\lambda} \lambda^{C(s)}} {\prod _{i=0} ^{N(s)} x_i!} d\lambda \\
+     & = 
+  \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \int _{0} ^{\infty} \lambda^{\alpha-1} e^{-\lambda \beta} {e^{-N(s)\lambda} \lambda^{C(s)}} d\lambda\\
+     & = 
+    \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \int _{0} ^{\infty} \lambda^{\alpha-1+C(s)}  {e^{-\lambda(N(s)-\beta)} } d\lambda
+\end{align*}
+
+Using a fact that:
+$$
+\int _0 ^{\infty}  \lambda^{\xi-1} e^{-\mu\lambda}d\lambda = \Gamma(\xi) \mu^{-\xi}
+$$
+
+we can take the integral
+\begin{align}\label{eq:segmentML}
+    ML(s, \alpha, \beta) & =
+    \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \int _{0} ^{\infty} \lambda^{\alpha-1+C(s)}  {e^{-\lambda(N(s)-\beta)} } d\lambda \\
+    & = 
+    \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!} \frac {\Gamma(C(s)+\alpha)} {(N(s)+\beta)^{C(s)+\alpha}} 
+\end{align}
+
+Let's say we have $k$ segments $s_1, \cdots s_K$. As all $\{\lambda_i | i \in 1 \dots k\}$ by assumption are independently drawn from gamma distribution,
+marginal likelihood of counts of the chromosome is equal to product of marginal likelihoods of each segment.
+\begin{equation}\label{eq:fullML}
+ML(s_1, \cdots s_k, \alpha, \beta) = \prod _{j=1} ^{k} ML(s_j, \alpha, \beta)     
+\end{equation}
+
+Given vector $V$ of nucleotide coverage counts, Pasio algorithm aims to find split of chromosome into segments $s_i$
+so that marginal likelihood is maximized:
+
+$$ML(s_1, \cdots s_k, \alpha, \beta) \rightarrow \max$$
+
+\subsubsection{Analyzing role of $\alpha$ and $\beta$}
+
+Now we are analyzing the role of $\alpha$ and $\beta$.
+Let's decompose marginal likelihood into multipliers:
+\begin{align*}
+    ML(s_1, \cdots s_k, \alpha, \beta) & = \prod _{j=1} ^{k} ML(s_j, \alpha, \beta) \\
+    & = 
+    \prod _{j=1} ^{k} \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s_j)} x_i!} \frac {\Gamma(C(s_j)+\alpha)} {(N(s_j)+\beta)^{C(s_j)+\alpha}} \\
+    & = 
+    \underbrace {\frac {\left[\beta^{\alpha}\right]^k} {\prod _{j=1} ^{k} \prod _{i=0} ^{N(s_j)} x_i!}}_{\text{Does not depend on segmentation}}
+    \underbrace {\prod _{j=1} ^{k}  \frac {\Gamma(C(s_j)+\alpha)} {\Gamma(\alpha)(N(s_j)+\beta)^{C(s_j)+\alpha}} }_{\text{Does depend on segmentation}}
+\end{align*}
+
+Let's denote
+$$
+\Psi =  \frac 1 {\prod _{j=1} ^{k} \prod _{i=0} ^{N(s_j)} x_i!}
+$$
+which doesn't depend on $\alpha$ and $\beta$. 
+And therefore
+$$
+ML(s_1, \cdots s_k, \alpha, \beta) = \prod _{j=1} ^{k} ML(s_j, \alpha, \beta) = \Psi \prod _{j=1} ^{k}  \frac {\Gamma(C(s_j)+\alpha)} {\Gamma(\alpha)(N(s_j)+\beta)^{C(s_j)+\alpha}}
+$$
+Now, let's use Stirling's approximation for Gamma function
+$$
+\Gamma(z) = z^z e^{-z} \frac 1 {\sqrt{2\pi z}}
+$$
+
+\begin{align*}
+    ML(s_1, \cdots s_k, \alpha, \beta) = &\\
+    =&\Psi \left[\beta^{\alpha}\right]^k  
+    \prod _{j=1} ^{K}  
+    \frac {\Gamma(C(s_j)+\alpha)} {\Gamma(\alpha)(N(s_j)+\beta)^{C(s_j)+\alpha}} \\
+    =& \Psi \left[\beta^{\alpha}\right]^k
+    \prod _{j=1} ^{k}
+    \frac {(C(s_j)+\alpha)^{C(s_j)+\alpha}\cdot e^{-\left(C(s_j)+\alpha\right)}\frac 1 {\sqrt{2 \pi\cdot\left(C(s_j)+\alpha\right) }}} 
+    {(N(s_j)+\beta)^{C(s_j)+\alpha}\cdot\frac 1 {\sqrt{2 \pi \alpha } }\alpha^\alpha e^{-\alpha}}\\
+    =&
+    \Psi\left[\beta^{\alpha}\right]^{k}
+    \prod _{j=1} ^{k} \left[
+    \left( \frac {C(s_j)+\alpha} {N(s_j)+\beta} \right) ^ {C(s_j)+\alpha} e^{-C(s_j)} \sqrt{\frac \alpha {C(s_j)+\alpha}} \frac 1 {\alpha^\alpha} \right]\\
+    =&
+    \Psi\left[\left(\frac {\beta} {\alpha} \right) ^{\alpha} \right]^k
+    \prod _{j=1} ^{k} \left[
+    \left( \frac {C(s_j)+\alpha} {N(s_j)+\beta} \right) ^ {C(s_j)+\alpha} e^{-C(s_j)} \sqrt{\frac \alpha {C(s_j)+\alpha}} 
+    \right] \\
+    =&
+    \underbrace{
+        \left[\left(\frac {\beta} {\alpha} \right) ^{\alpha}\right]^ k} 
+        _{\text{Penalty for number of segments}
+    }
+    \times
+    \underbrace{
+        {\Psi e^{-\sum_{j=0} ^k C(s_j)}}} 
+        _{\text{Doesn't depend on segmentation}
+    }\times\\
+    &\times\prod _{j=1} ^{k} \left[
+    \left(\underbrace { \frac {C(s_j)+\alpha} {N(s_j)+\beta}}_{\text{mean counts estimation}} \right) ^ {C(s_j)+\alpha}  
+    \times\sqrt{\frac \alpha {C(s_j)+\alpha}} \right]{}
+\end{align*}
+
+We can see that $(\beta/\alpha)^{\alpha}$ can be treated as a penalty for segment creation.
+
+Term $\frac {C(s_j)+\alpha} {N(s_j)+\beta}$ is an estimation of $\lambda$ given certain coverage and length of segment and a certain prior.
+
+% FIXME ААА какой во всем этом смысл?
+% ВЮ пофиксите пожалуйста
+
+% Хорошо бы написать, как соотношение alpha и beta влияет на среднюю ширину пика(сегмента)
+\subsubsection{Logarithm of Likelihood}
+Instead of likelihoods we can use its logarithms. Logarithm of marginal likelihood for a single segment (\ref{eq:segmentML}) is:
+\begin{align*}
+    \log (ML(s, \alpha, \beta)) & = &
+    \log \left( \frac {\beta^\alpha} {\Gamma(\alpha) \prod _{i=0} ^{N(s)} x_i!}
+    \frac {\Gamma(C(s)+\alpha)} {(N(s)+\beta)^{C(s)+\alpha}} \right) & \\
+    & = &
+    \log \left( \beta^\alpha \right) - \log \left( \Gamma(\alpha) \right) 
+    -\log \left( \prod _{i=0} ^{N(s)} x_i! \right) & \\
+    && + \log \left( \Gamma(C(s)+\alpha)  \right) -
+    \log \left( (N(s)+\beta)^{C(s)+\alpha}\right) & \\
+    & = &
+    \alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha) \right) -\sum _{i=0} ^{N(s)} \log \left( x_i! \right) & \\
+    && + \log \left( \Gamma(C(s)+\alpha)  \right) -
+    (C(s)+\alpha)\log \left( (N(s)+\beta)\right) & 
+\end{align*}
+
+Logarithm of marginal likelihood for a segmentation of a whole chromosome (\ref{eq:fullML}) can be written as a sum of such logarithms.
+
+\begin{equation*}
+\begin{array}{llll}
+\sum _{j=1} ^{k} \log (ML(s_j, \alpha, \beta)) =
+                    &\sum _{i=1} ^{k}\left(\vphantom{\sum _{i=1} ^{k}}\right.
+                       &\alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha) \right) \\
+                       &&-\sum _{i=1} ^{N(s_j)} \log \left( x_i! \right) \\
+                       &&+\log \left( \Gamma(C(s_j)+\alpha)  \right) \\
+                       &&-(C(s_j)+\alpha)\log \left( N(s_j)+\beta\right)&\left.\vphantom{\sum _{i=1} ^{k}} \right) =
+\end{array}
+\end{equation*}
+\begin{equation*}
+\begin{array}{ll}
+= & k\cdot\left(\alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha) \right)\right) 
+-\sum _{j=1} ^{k}\sum _{i=1} ^{N(s_j)} \log \left( x_i! \right) \\
+&+\sum _{j=1} ^{k}\left( \log \left( \Gamma(C(s_j)+\alpha)  \right) -(C(s_j)+\alpha)\log \left( N(s_j)+\beta\right) \right)
+\end{array}
+\end{equation*}
+
+
+
+% \begin{equation*}
+% \begin{split}
+% \sum _{j=1} ^{k} \log (ML(s_j, \alpha, \beta)) =
+%                     &\sum _{i=1} ^{k}\left(\vphantom{\sum _{i=1} ^{k}}\right.
+%                       &\alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha) \right) \\
+%                       &&-\sum _{i=1} ^{N(s_j)} \log \left( x_i! \right) \\
+%                       &&+\log \left( \Gamma(C(s_j)+\alpha)  \right) \\
+%                       &&-(C(s_j)+\alpha)\log \left( N(s_j)+\beta\right)&\left.\vphantom{\sum _{i=1} ^{k}} \right) =
+% \end{split}
+% \end{equation*}
+% \begin{equation*}
+% \begin{array}{ll}
+% = & k\cdot\left(\alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha) \right)\right) 
+% -\sum _{j=1} ^{k}\sum _{i=1} ^{N(s_j)} \log \left( x_i! \right) \\
+% &+\sum _{j=1} ^{k}\left( \log \left( \Gamma(C(s_j)+\alpha)  \right) -(C(s_j)+\alpha)\log \left( N(s_j)+\beta\right) \right)
+% \end{array}
+% \end{equation*}
+
+
+
+The summand $-\sum _{j=1} ^{k}\sum _{i=1} ^{N(s_j)} \log \left( x_i! \right)$ does not depend on segmentation
+it is just sum of logarithm of factorial of each value in vector $V$.
+The summand $k\cdot\left(\alpha \log \left( \beta \right) - \log \left( \Gamma(\alpha) \right)\right)$ does depend on number of segments
+but does not depend on their coordinates.
+The rest part of the formula scores the coordinates of segments.
+
+
+\subsection{Algorithm of marginal likelihood minimization}
+
+As mentioned earlier, given vector $V$ of counts our aim is to find a segmentation which maximizes logarithmic marginal likelihood.
+
+In this section we'll describe a general algorithm of maximizing sum of arbitrary scoring function $S$ over segments of $V$.
+The algorithm is based on dynamic programming approach.
+Given a vector of length $1$ it's perfect segmentation is the only segment of length $1$.
+Now given a vector $V$ of length $n$ and perfect segmentation $P$ for all it's prefixes $\{V[0:i] | i \in [0, ..., n-1]\}$ we'll compute a perfect segmentation of vector $V$. 
+Consider, that a perfect segmentation of vector $V$ is found.
+Let $V[j:n]$ be the last segment in this segmentation.
+And we know a perfect segmentation for $V[0:j-1]$.
+So, to find perfect segmentation for $V[0:n]$ we need to
+find $j$ that minimizes $P(V[0:j]) + S(V[j:n])$.
+In pasio we search for $j$ by exhaustive search of $j$
+among $1, \dots n$.
+
+The time complexity of algorithm above is $O(n^2)$.
+
+Using a fact that scoring function $S$ does not depend on distribution of counts along each segment
+but depends only on length and sum of counts of segments, we can change the algorithm for efficient solving of a more general problem of
+splitting vector of counts $V$ given a restricted set of possible split points $\{p\}$ of size $m$.
+Each point in $\{p\}$ can be an edge of segment but all other coordinates can not.
+Given $V$ and $\{p\}$ we can describe intervals between adjacent elements of $\{p\}$ with two numbers - $N_i$ equal to it's length
+and $C_i$ equal to sum of counts in the interval.
+With these two vectors we can reproduce the procedure for search of perfect segmentation. 
+
+The time complexity of algorithm above is $O(m^2 + n)$. Here $O(n)$ term corresponds to calculation of $N_i$ and $C_i$ for all intervals.
+
+In the edge case we take all coordinates of $V$ as possible split points which makes $m = n$. 
+That makes pure version of algorithm unsuitable for practical usages of splitting chromosomes which are millions of nucleotides long.
+
+We use two heuristics to compute segmentation approximate to optimal based on strategies to reduce $m$.
+The first heuristic is called sliding window splitting.
+It is based on an assumption that distant regions don't influence segmentation so we can find split-points for a continuous part of $V$ 
+of a size small enough to launch quadratic algorithm.
+To remove influence of boundary effects we launch square algorithm in overlapping windows of the same size.
+We found that in practice overlap of half window size is a good choice. To further refine segmentation we use sliding window approach
+iteratively which bring us to our second heuristic called "rounds heuristic".
+We take union of splits that are obtained from sliding window approach and launch
+another iteration of sliding window for continuous part of $V$ that contain a number of split points $m$ small enough to
+compute full segmentation of this part using this split points as only possible candidates of segment edges.
+We repeat this procedure using split candidates remained on the previous round while no split points are removed.
+The remaining split points becomes a resulting segmentation.
+
+The third approach to reduce number of split points limiting it to coordinates $x$ that have different counts values in $V[x]$ and $V[x+1]$. 
+
+
+% Results and Discussion can be combined.
+\section*{Results}
+In this work we describe 
+
+
+\section*{Discussion}
+
+% Какие параметры alpha/beta надо выбирать.
+
+% 1. Нужны примеры, ака картинки.
+% Как выглядит отсегментированный профиль вообще. Желательно в разных экспериментах (на опубликованых ранее данных?)
+
+% 2. Мы много возились с чипсеками, нужны примеры профилей вокруг пиков.
+
+% 3. Показать футпринты (это ДНКза уже)
+
+% 4. Во-первых надо сослаться, что мы не первые эту задачу решаем, где-то в introduction/. Надо сослаться на basio.
+%  https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2140-3
+
+% 5. Мы регуляризацию не описали.
+
+% 6. можем ли мы сегментировать покрытие подмножества нуклеотидов (например, каунты на CpG-позициях), т.к. нам не важны реальные длины сегментов в нуклеотидах
+
+% 7. a) нарисовать распределение лямбд. Нарисовать распределение каунтов внутри какого-нибудь крупного сегмента
+%    b) взять разметку из энкода и посмотреть, как распределены лямбды таких сегментов, зафиттить alpha|beta
+
+% 8. Оставляем гипотезу и результат в тексте, остальное переносим в аппендикс
+
+
+\section*{Conclusion}
+Nothing is here yet
+
+\section*{Supporting information}
+Link to github
+% Include only the SI item label in the paragraph heading. Use the \nameref{label} command to cite SI items in the text.
+
+\section*{Acknowledgments}
+Todododod
+
+\nolinenumbers
+
+% Either type in your references using
+% \begin{thebibliography}{}
+% \bibitem{}
+% Text
+% \end{thebibliography}
+%
+% or
+%
+% Compile your BiBTeX database using our plos2015.bst
+% style file and paste the contents of your .bbl file
+% here. See http://journals.plos.org/plosone/s/latex for 
+% step-by-step instructions.
+% 
+\begin{thebibliography}{10}
+\iffalse
+
+\bibitem{bib1}
+Conant GC, Wolfe KH.
+\newblock {{T}urning a hobby into a job: how duplicated genes find new
+  functions}.
+\newblock Nat Rev Genet. 2008 Dec;9(12):938--950.
+
+\bibitem{bib2}
+Ohno S.
+\newblock Evolution by gene duplication.
+\newblock London: George Alien \& Unwin Ltd. Berlin, Heidelberg and New York:
+  Springer-Verlag.; 1970.
+
+\bibitem{bib3}
+Magwire MM, Bayer F, Webster CL, Cao C, Jiggins FM.
+\newblock {{S}uccessive increases in the resistance of {D}rosophila to viral
+  infection through a transposon insertion followed by a {D}uplication}.
+\newblock PLoS Genet. 2011 Oct;7(10):e1002337.
+\fi
+\end{thebibliography}
+
+
+
+\end{document}
+
