@@ -113,3 +113,6 @@ In order to efficiently compute `log(x)` and `log(Г(x))` we precompute values f
 Computation efficiency restricts us to integer values of `α` and `β`. Segment lengths are naturally integer,
 coverage counts (and total segment counts) are also integer because they represent numbers of cuts.
 `LogComputer` and `LogGammaComputer` store precomputed values and know how to calculate these values efficiently.
+
+## See also
+Predecessor of our approach — “[Segmentation of long genomic sequences into domains with homogeneous composition with BASIO software](https://doi.org/10.1093/bioinformatics/17.11.1065)”.
