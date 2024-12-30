@@ -116,3 +116,19 @@ coverage counts (and total segment counts) are also integer because they represe
 
 ## See also
 Predecessor of our approach — “[Segmentation of long genomic sequences into domains with homogeneous composition with BASIO software](https://doi.org/10.1093/bioinformatics/17.11.1065)”.
+
+## Development
+
+Bumping new version:
+```
+VERSION='1.2.3'
+echo "__version__ = '${VERSION}'"  >  src/pasio/version.py
+git commit -am "bump version ${VERSION}"
+git tag "${VERSION}"
+git push
+git push --tags
+rm dist/ build/ -r
+python3 setup.py sdist
+python3 setup.py bdist_wheel --universal
+twine upload dist/*
+```
